@@ -20,6 +20,9 @@ _moofetch() {
     --logo|-l)
       local -a logos
       readarray -t logos < <(moofetch --list-logos autocompletion 2>/dev/null)
+      local -a animations
+      readarray -t animations < <(moofetch --list-animations 2>/dev/null)
+      logos+=("${animations[@]}")
       logos+=("none" "small")
       COMPREPLY=($(compgen -W "${logos[*]}" -- "$cur"))
       return

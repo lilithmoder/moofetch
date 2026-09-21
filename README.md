@@ -12,12 +12,18 @@ logos**.
 ## Features
 
 * **Animated ASCII logos** — multi-frame, colored animations rendered in place next to
-  the info output.
-* **Built-in animations** for CachyOS, Arch, Debian, Ubuntu, Fedora, plus generic
-  `default` and `spinner` animations. Auto-detected from your distro.
+  the info output, for the `left`, `top` and `right` logo positions.
+* **35 built-in animations**: Arch, CachyOS, Debian, Fedora, Ubuntu, openSUSE (incl.
+  Leap/Tumbleweed), Linux Mint, Pop!_OS, Manjaro, EndeavourOS, Garuda, NixOS, Gentoo,
+  Alpine, Kali, Void, elementary, Zorin, MX, deepin, Artix, RHEL, Rocky, AlmaLinux,
+  CentOS, Slackware, Raspberry Pi OS, Parrot, Devuan — plus slow 3D-spin variants
+  (`arch_rotate`, `cachyos_rotate`) and generic `default`/`spinner` animations.
+  Auto-detected from your distro.
 * **Custom animations** in a simple, documented plain-text `.anim` format
   (see [`examples/README.md`](examples/README.md)) — theme colors (`$1`–`$9`) and raw
-  ANSI/truecolor supported. A `gif2anim` converter turns GIFs into animations.
+  ANSI/truecolor supported. Converters: `tools/gif2anim` (GIF → `.anim` on the command
+  line) and a **browser-based converter** at [`web/index.html`](web/index.html)
+  (drag & drop a GIF, preview it, download the `.anim`).
 * **Drop-in compatible** with fastfetch: any existing fastfetch `config.jsonc` and all
   fastfetch CLI options work unchanged. moofetch reads `~/.config/moofetch/` first and
   falls back to `~/.config/fastfetch/`.
@@ -79,8 +85,8 @@ On distros with a built-in animation, moofetch animates the logo by default — 
 static logo. The animation plays for the configured number of loops, freezes on the hold
 frame, and then moofetch exits — safe for shell startup files. With `"loop": 0` it runs
 until a key is pressed or the timeout is reached. Animation only plays when stdout is an
-interactive terminal and the logo position is `left`; everywhere else the hold frame is
-printed statically.
+interactive terminal; everywhere else the hold frame is printed statically. All logo
+positions (`left`, `top`, `right`) are supported.
 
 Existing fastfetch configurations are fully supported. A config that does not mention the
 logo (or uses a non-animation logo type) behaves exactly like fastfetch, except that a
@@ -89,7 +95,9 @@ bare `moofetch` run may animate as described above.
 ## Creating animations
 
 The `.anim` format, the bundled examples and the `tools/gif2anim` converter are
-documented in [`examples/README.md`](examples/README.md).
+documented in [`examples/README.md`](examples/README.md). There is also a self-contained
+browser converter at [`web/index.html`](web/index.html) — open it locally (or host the
+`web/` directory with GitHub Pages) and drag a GIF onto it.
 
 ## Project status
 
@@ -97,10 +105,12 @@ This is a hard fork pinned to fastfetch `2.68.1`; see [`UPSTREAM.md`](UPSTREAM.m
 provenance. Known limitations:
 
 * Animated logos are POSIX-terminal only (Windows prints the hold frame statically).
-* Only `left` logo position is animated (`top`/`right` fall back to a static frame).
 * Animation cannot persist after moofetch exits — the shell owns the terminal afterwards.
   (Terminal-native image protocols could, but that is out of scope; see
   [`PLAN.md`](PLAN.md) §17.)
+
+Packaging files (AUR, Nix flake, Homebrew template) live in [`packaging/`](packaging/);
+they need the real repository URL before use.
 
 ## Credits and license
 

@@ -775,9 +775,35 @@ void ffLogoPrintAnimationFrame(const char* data) {
     ffLogoPrintChars(data, true);
 }
 
-void ffLogoPrintAnimationRow(uint32_t row) {
-    instance.state.logoLineCache.nextLine = row;
-    ffLogoPrintLine();
+void ffLogoPrintAnimationFrameBuild(const char* data) {
+    FFOptionsLogo* options = &instance.config.logo;
+
+    if (options->position == FF_LOGO_POSITION_TOP) {
+        // TOP prints immediately in ffLogoPrintChars; build the line cache only instead
+        options->position = FF_LOGO_POSITION_LEFT;
+        logoApplyColors(logoGetBuiltinDetected(FF_LOGO_SIZE_NORMAL), true);
+        ffLogoPrintChars(data, true);
+        options->position = FF_LOGO_POSITION_TOP;
+        instance.state.logoWidth = 0;
+        instance.state.logoHeight = 0;
+        return;
+    }
+
+    ffLogoPrintAnimationFrame(data);
+}
+
+void ffLogoPrintAnimationRow(uint32_t row, uint32_t visibleWidth) {
+    FFLogoLineCacheState* cache = &instance.state.logoLineCache;
+    if (row >= cache->lines.length) {
+        return;
+    }
+
+    FFLogoCachedLine* line = FF_LIST_GET(FFLogoCachedLine, cache->lines, row);
+    ffStrbufWriteTo(&line->chars, stdout);
+    if (line->width < visibleWidth) {
+        // `line->chars` ends with a text modifier reset, so the padding is never colored
+        ffPrintCharTimes(' ', visibleWidth - line->width);
+    }
 }
 
 void ffLogoBuiltinPrint(void) {

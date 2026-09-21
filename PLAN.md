@@ -639,17 +639,24 @@ baseline per upstream releases).
 
 ---
 
-## 17. Stretch goals (explicitly out of scope; revisit after v1)
+## 17. Stretch goals
 
-1. **Kitty/iTerm2 graphics-protocol animated logos** — the *only* way to get animation
-   that persists while the shell is in use, because the terminal emulator loops the image
-   itself after we exit. Terminal-specific and image- (not ASCII-) based. Note that
-   upstream's `animationFrame = 0` already hints at image animation support on `dev`;
-   evaluate what shipped in the forked release before designing this.
-2. Single-file HTML web converter (drag GIF → download `.anim`) hosted from the repo
-   (GitHub Pages).
-3. Community animation packs; `--list-animations`; AUR/nix/Homebrew packaging.
-4. Animation for `top`/`right` logo positions; Windows Terminal animation support.
+Status as of the current implementation (see §19):
+
+1. **Kitty/iTerm2 graphics-protocol animated logos** — **not implemented.** This is the
+   only route to animation that persists after exit (the terminal emulator loops the
+   image itself), but it requires multi-frame GIF decoding plus terminal-specific
+   protocol work and cannot be verified in this environment. Note that `--logo-type
+   kitty-direct` with an animated image file may already animate on terminals that decode
+   the file themselves; that is untested and upstream behaviour.
+2. **Single-file HTML web converter** — **done:** `web/index.html` (drag a GIF, preview,
+   download `.anim`; GitHub Pages-ready), covered by `tests/web_converter.test.cjs`.
+3. **Community animation packs / `--list-animations` / packaging** — **done:** 35 bundled
+   animations including slow-spin variants; `--list-animations`; packaging scaffolding in
+   `packaging/` and `flake.nix` (needs the real repository URL before publishing).
+4. **Animation for `top`/`right` logo positions** — **done** (covered by PTY tests).
+   **Windows Terminal animation support — not implemented** (Windows still prints the
+   hold frame statically).
 
 ---
 
@@ -720,6 +727,15 @@ Deviations from this plan:
   non-interactive `--gen-config` keeps upstream behaviour (modules only).
 - Upstream project artifacts (`debian/`, upstream CI matrix, issue templates,
   `screenshots/`, `README-cn.md`) were removed as part of the hard fork; see `UPSTREAM.md`.
-- Stretch goals (§17) remain unimplemented.
+
+Stretch goals follow-up (see §17):
+
+- Added 28 more bundled distro animations (35 total) and slow 3D-spin variants
+  `arch_rotate.anim` / `cachyos_rotate.anim` (36 frames, one revolution, freeze on the
+  original).
+- Animation now works for `top` and `right` logo positions, with PTY tests.
+- Added the browser converter (`web/index.html`, Node-tested) and packaging scaffolding
+  (`packaging/`, `flake.nix`).
+- Not done: kitty/iTerm2 persistent animation and Windows animation (see §17).
 
 End of document.

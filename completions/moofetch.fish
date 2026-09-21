@@ -48,6 +48,9 @@ function __moofetch_complete_logo
     for line in (moofetch --list-logos autocompletion)
         echo -e "$line\tBuiltin logo"
     end
+    for line in (moofetch --list-animations)
+        echo -e "$line\tBuiltin animation"
+    end
     echo -e "none\tDon't print logo"
     echo -e "small\tPrint small ascii logo if available"
 end

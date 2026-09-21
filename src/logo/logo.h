@@ -36,8 +36,9 @@ const FFlogo* ffLogoGetBuiltinForName(const FFstrbuf* name, FFLogoSize size);
 const FFlogo* ffLogoGetBuiltinDetected(FFLogoSize size);
 
 // logo.c, used by logo/animation.c
-void ffLogoPrintAnimationFrame(const char* data); // builds the line cache from a frame
-void ffLogoPrintAnimationRow(uint32_t row);       // redraws one cached frame row at the cursor position
+void ffLogoPrintAnimationFrame(const char* data); // prints/builds a frame at the real logo position
+void ffLogoPrintAnimationFrameBuild(const char* data); // builds the line cache without printing (any position)
+void ffLogoPrintAnimationRow(uint32_t row, uint32_t visibleWidth); // redraws one cached frame row at the cursor position
 
 // builtin.c
 extern const FFlogo* ffLogoBuiltins[];

@@ -30,8 +30,16 @@ jobs:
           ./build/moofetch --list-animations
           ./build/moofetch --logo-type animation --logo arch --pipe | head -5
 
+      - name: Verify bundled animations are up to date
+        run: |
+          python3 tools/gen-animations.py
+          git diff --exit-code examples/
+
       - name: PTY smoke tests
         run: python3 tests/pty_smoke.py build/moofetch
+
+      - name: Web converter tests
+        run: node tests/web_converter.test.cjs
 
       - name: Build upstream fastfetch baseline
         run: |

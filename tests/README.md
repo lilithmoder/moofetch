@@ -19,6 +19,16 @@ sends (DSR cursor position, text-area size), then asserts on the captured byte s
 python3 tests/pty_smoke.py build/moofetch
 ```
 
+## `web_converter.test.cjs` — browser converter logic
+
+Extracts the inline script from `web/index.html`, runs its pure functions under Node
+(pixel→character mapping, transparency, invert, directives) and validates a generated
+`.anim` file with moofetch's real parser.
+
+```sh
+node tests/web_converter.test.cjs
+```
+
 ## `config_compat.sh` — upstream compatibility
 
 Diffs moofetch against a stock fastfetch `2.68.1` build for deterministic outputs:

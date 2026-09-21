@@ -197,6 +197,44 @@ def test_tall_logo():
     check("\x1b[K" not in text, "info columns never touched")
 
 
+def test_position_top():
+    print("test: animation with --logo-position top")
+    output, code = run_pty(ARGS + ["--logo-position", "top", "--logo-animation-loop", "1"])
+    text = output.decode("utf-8", "replace")
+    check(code == 0, f"exit code 0 (got {code})")
+    frame_writes = text.count("\x1b[?2026h")
+    check(frame_writes >= 10, f"at least 10 frame redraws, got {frame_writes}")
+    check("\x1b[?25h" in text, "cursor restored")
+    check("\x1b[K" not in text, "info never cleared")
+
+
+def test_position_right():
+    print("test: animation with --logo-position right")
+    output, code = run_pty(ARGS + ["--logo-position", "right", "--logo-animation-loop", "1"])
+    text = output.decode("utf-8", "replace")
+    check(code == 0, f"exit code 0 (got {code})")
+    frame_writes = text.count("\x1b[?2026h")
+    check(frame_writes >= 10, f"at least 10 frame redraws, got {frame_writes}")
+    check("\x1b[?25h" in text, "cursor restored")
+    check("\x1b[K" not in text, "info never cleared")
+    # The right-side logo must be redrawn near the right edge (column > 40 in an 80 col pty)
+    check(re.search(r"\x1b\[\d+;([4-9]\d)H", text) is not None, "redraws use a right-side column")
+
+
+def test_rotate_animation():
+    print("test: bundled 36-frame rotation animation")
+    output, code = run_pty([
+        "--logo-type", "animation", "--logo", "arch_rotate",
+        "--structure", "title:os",
+        "--logo-animation-fps", "60", "--logo-animation-loop", "1",
+    ])
+    text = output.decode("utf-8", "replace")
+    check(code == 0, f"exit code 0 (got {code})")
+    frame_writes = text.count("\x1b[?2026h")
+    check(frame_writes == 36, f"exactly 36 frames drawn, got {frame_writes}")
+    check("\x1b[?25h" in text, "cursor restored")
+
+
 def test_hold_first_static():
     print("test: --logo-animation-hold first freezes on the first frame when piped")
     proc = subprocess.run(
@@ -220,6 +258,9 @@ def main():
     test_pipe_mode_is_static()
     test_config_file()
     test_tall_logo()
+    test_position_top()
+    test_position_right()
+    test_rotate_animation()
     test_hold_first_static()
     if failures:
         print(f"\n{len(failures)} test(s) failed")

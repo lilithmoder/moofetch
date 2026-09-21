@@ -331,12 +331,27 @@ bool ffAnimationParseData(const char* data, FFAnimation* animation, FFstrbuf* er
 
 // ------------------------------------------------------------- builtin lookup
 
+static bool animationNameEqual(const char* a, const char* b) {
+    // Case-insensitive, treating `-` and `_` as equivalent (e.g. `opensuse-tumbleweed`
+    // matches `opensuse_tumbleweed`)
+    while (*a != '\0' && *b != '\0') {
+        char ca = *a == '-' ? '_' : (char) tolower((unsigned char) *a);
+        char cb = *b == '-' ? '_' : (char) tolower((unsigned char) *b);
+        if (ca != cb) {
+            return false;
+        }
+        ++a;
+        ++b;
+    }
+    return *a == *b;
+}
+
 static const FFBuiltinAnimation* animationFindBuiltin(const FFstrbuf* name) {
     if (name->length == 0) {
         return nullptr;
     }
     for (const FFBuiltinAnimation* animation = ffBuiltinAnimations; animation->name != nullptr; ++animation) {
-        if (ffStrbufIgnCaseEqualS(name, animation->name)) {
+        if (animationNameEqual(name->chars, animation->name)) {
             return animation;
         }
     }
@@ -467,7 +482,9 @@ static FFAnimation gAnimation;
 static bool gAnimationLoaded = false;
 static bool gAnimationEligible = false;
 static uint32_t gAnimationInfoLines = 0;
-static uint32_t gAnimationRegionHeight = 0;
+static uint32_t gAnimationArtRows = 0; // rows occupied by the logo art (including padding top)
+static uint32_t gAnimationTotalRows = 0; // all rows printed above the final cursor position
+static uint32_t gAnimationRightOffset = 0; // logo right offset (only used for position right)
 static uint32_t gAnimationEndRow = 0;
 
 static bool animationCanAnimate(void) {
@@ -478,9 +495,6 @@ static bool animationCanAnimate(void) {
         return false;
     }
     if (!isatty(STDOUT_FILENO)) {
-        return false;
-    }
-    if (instance.config.logo.position != FF_LOGO_POSITION_LEFT) {
         return false;
     }
     if (gAnimation.frames.length < 2) {
@@ -527,7 +541,20 @@ bool ffAnimationBegin(void) {
     gAnimationInfoLines = instance.state.keysHeight;
     // Frames end without a trailing newline, so upstream's line parser counts one line
     // less than the frame has; the last line is still printed from the line cache.
-    gAnimationRegionHeight = instance.config.logo.paddingTop + gAnimation.height;
+    gAnimationArtRows = instance.config.logo.paddingTop + gAnimation.height;
+
+    if (instance.config.logo.position == FF_LOGO_POSITION_TOP) {
+        // The logo is printed completely above the info block, followed by paddingBottom
+        gAnimationTotalRows = gAnimationArtRows + instance.config.logo.paddingBottom + gAnimationInfoLines;
+    } else {
+        // Logo and info lines are interleaved; remaining logo lines are printed after them
+        gAnimationTotalRows = gAnimationInfoLines > gAnimationArtRows ? gAnimationInfoLines : gAnimationArtRows;
+    }
+
+    // ffLogoPrintRemaining() clears the line cache before ffAnimationRun() runs, so the
+    // right-side offset has to be captured here.
+    gAnimationRightOffset = instance.state.logoLineCache.rightOffset;
+
     gAnimationEligible = true;
     return true;
 }
@@ -581,14 +608,42 @@ void ffAnimationRun(void) {
         return; // terminal doesn't answer DSR: leave the statically printed frame
     }
 
-    uint32_t totalLines = gAnimationInfoLines > gAnimationRegionHeight ? gAnimationInfoLines : gAnimationRegionHeight;
-    if (cursorRow <= totalLines) {
+    if (cursorRow <= gAnimationTotalRows) {
         return; // the logo region has scrolled out of the screen
     }
-    uint32_t startRow = cursorRow - totalLines;
+    uint32_t startRow = cursorRow - gAnimationTotalRows;
 
-    struct winsize size;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == 0 && size.ws_col > 0 && instance.state.logoWidth >= size.ws_col) {
+    struct winsize size = {};
+    bool haveSize = ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == 0 && size.ws_col > 0;
+
+    // Compute the redraw region (start column and width) for the configured logo position.
+    // The cursor is moved there with absolute CUP sequences for every row.
+    uint32_t startColumn;
+    uint32_t visibleWidth;
+    switch (instance.config.logo.position) {
+        case FF_LOGO_POSITION_TOP:
+            startColumn = 1;
+            visibleWidth = instance.config.logo.paddingLeft + gAnimation.width;
+            break;
+        case FF_LOGO_POSITION_RIGHT: {
+            if (!haveSize) {
+                return;
+            }
+            uint32_t rightOffset = gAnimationRightOffset;
+            if (rightOffset == 0 || instance.config.logo.paddingRight == 0 || rightOffset >= size.ws_col) {
+                return;
+            }
+            startColumn = size.ws_col - rightOffset;
+            visibleWidth = rightOffset; // paddingRight >= 1, so this covers all ink and stays off the last column
+            break;
+        }
+        default: // FF_LOGO_POSITION_LEFT
+            startColumn = 1;
+            visibleWidth = instance.state.logoWidth;
+            break;
+    }
+
+    if (visibleWidth == 0 || (haveSize && startColumn + visibleWidth > size.ws_col)) {
         return; // writing to the last column may wrap and corrupt the layout
     }
 
@@ -621,12 +676,12 @@ void ffAnimationRun(void) {
                 goto cleanup;
             }
 
-            ffLogoPrintAnimationFrame(FF_LIST_GET(FFstrbuf, gAnimation.frames, frameIndex)->chars);
+            ffLogoPrintAnimationFrameBuild(FF_LIST_GET(FFstrbuf, gAnimation.frames, frameIndex)->chars);
 
             fputs("\e[?2026h", stdout); // synchronized output (DEC 2026), ignored where unsupported
-            for (uint32_t row = 0; row < gAnimationRegionHeight; ++row) {
-                printf("\e[%u;1H", startRow + row);
-                ffLogoPrintAnimationRow(row);
+            for (uint32_t row = 0; row < gAnimationArtRows; ++row) {
+                printf("\e[%u;%uH", startRow + row, startColumn);
+                ffLogoPrintAnimationRow(row, visibleWidth);
             }
             fputs("\e[?2026l", stdout);
             fflush(stdout);

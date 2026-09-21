@@ -102,6 +102,7 @@ EOF
     logos)
       local -a logos=(
         "${(f)$(moofetch --list-logos autocompletion)}"
+        "${(f)$(moofetch --list-animations)}"
         "none:Don't print logo"
         "small:Print small ascii logo if available"
       )

@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>moofetch .anim converter</title>
+<style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0; padding: 2rem 1rem; background: #101418; color: #d8dee9;
+        font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    main { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+    h1 span { color: #7fdbca; }
+    p.lead { margin: 0 0 1.5rem; color: #9aa5b1; }
+    a { color: #7fdbca; }
+    #drop {
+        border: 2px dashed #3b4754; border-radius: 10px; padding: 2rem 1rem;
+        text-align: center; transition: border-color .15s, background .15s; cursor: pointer;
+    }
+    #drop.over { border-color: #7fdbca; background: #16212b; }
+    #drop strong { color: #fff; }
+    #options { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+    label { display: flex; flex-direction: column; gap: .25rem; font-size: .8rem; color: #9aa5b1; }
+    input, select, button {
+        font: inherit; color: inherit; background: #1b2530; border: 1px solid #3b4754;
+        border-radius: 6px; padding: .35rem .5rem;
+    }
+    button { cursor: pointer; background: #24313f; }
+    button:disabled { opacity: .45; cursor: default; }
+    button.primary { background: #2d6a5f; border-color: #3f8a7c; }
+    #status { min-height: 1.5em; color: #9aa5b1; font-size: .85rem; }
+    #previewWrap {
+        margin: 1rem 0; padding: 1rem; background: #0b0f13; border: 1px solid #24313f;
+        border-radius: 10px; overflow-x: auto;
+    }
+    #preview { margin: 0; white-space: pre; font-size: 13px; line-height: 1.15; }
+    #actions { display: flex; gap: .75rem; margin-top: 1rem; }
+    .hint { color: #6b7683; font-size: .8rem; }
+    .error { color: #ff8f8f; }
+</style>
+</head>
+<body>
+<main>
+    <h1>moofetch <span>.anim</span> converter</h1>
+    <p class="lead">
+        Turn an animated GIF / WebP (or a set of image frames) into a moofetch animation.
+        Use it with <code>moofetch --logo-type animation --logo my.anim</code>.
+        Format documentation: <a href="../examples/README.md">examples/README.md</a>.
+    </p>
+
+    <div id="drop" tabindex="0">
+        <strong>Drop an animated GIF / WebP here</strong><br>
+        or drop several images (one frame each), or <button id="browse" type="button">choose files</button>
+        <input id="file" type="file" accept="image/*" multiple hidden>
+    </div>
+
+    <div id="options">
+        <label>Width (cells) <input id="width" type="number" value="40" min="8" max="160"></label>
+        <label>FPS <input id="fps" type="number" value="12" min="1" max="60"></label>
+        <label>Loop <input id="loop" type="number" value="2" min="0" max="1000"></label>
+        <label>Timeout (ms, loop 0) <input id="timeout" type="number" value="5000" min="1" max="600000"></label>
+        <label>Hold frame
+            <select id="hold"><option value="">default</option><option value="first">first</option><option value="last">last</option></select>
+        </label>
+        <label>Characters
+            <select id="charset">
+                <option value="standard">standard (. :-=+*#%@)</option>
+                <option value="blocks">blocks (░▒▓█)</option>
+                <option value="detailed">detailed</option>
+                <option value="minimal">minimal (.*#)</option>
+            </select>
+        </label>
+        <label>Colors
+            <select id="color"><option value="truecolor">truecolor</option><option value="none">none</option></select>
+        </label>
+        <label>Title <input id="title" type="text" placeholder="optional comment"></label>
+        <label>Trim transparent edges <input id="trim" type="checkbox" checked></label>
+        <label>Invert brightness <input id="invert" type="checkbox"></label>
+    </div>
+
+    <div id="status"></div>
+    <div id="previewWrap"><pre id="preview">(preview appears here)</pre></div>
+    <div id="actions">
+        <button id="download" class="primary" disabled>Download .anim</button>
+        <button id="copy" disabled>Copy to clipboard</button>
+    </div>
+    <p class="hint">
+        Animated GIF decoding uses the browser's <code>ImageDecoder</code> API (Chrome, Edge,
+        Safari and recent Firefox). If it is unavailable, drop individual PNG/JPG frames
+        instead — each file becomes one frame, sorted by file name. Everything runs locally;
+        no data leaves your machine.
+    </p>
+</main>
+
+<script>
+(function () {
+    "use strict";
+
+    // ------------------------------------------------------------------ pure logic
+
+    const CHARSETS = {
+        standard: " .:-=+*#%@",
+        blocks: " ░▒▓█",
+        detailed: " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$",
+        minimal: " .*#",
+    };
+
+    // pixels: RGBA data at exactly width x height cells
+    function pixelsToLines(pixels, width, height, opts) {
+        const charset = CHARSETS[opts.charset] || CHARSETS.standard;
+        const useColor = opts.color !== "none";
+        const lines = [];
+        for (let y = 0; y < height; y++) {
+            let line = "";
+            let currentColor = null; // reset per line: the renderer resets colors after each line
+            for (let x = 0; x < width; x++) {
+                const i = (y * width + x) * 4;
+                const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2], a = pixels[i + 3];
+                if (a < 128) {
+                    line += " ";
+                    continue;
+                }
+                const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+                const level = opts.invert ? 1 - lum : lum;
+                const ch = charset[Math.min(charset.length - 1, Math.max(0, Math.round(level * (charset.length - 1))))];
+                if (ch === " ") {
+                    line += " ";
+                    continue;
+                }
+                if (useColor) {
+                    const key = r + "," + g + "," + b;
+                    if (key !== currentColor) {
+                        line += "\x1b[38;2;" + r + ";" + g + ";" + b + "m";
+                        currentColor = key;
+                    }
+                }
+                line += ch;
+            }
+            lines.push(line);
+        }
+        return lines;
+    }
+
+    function buildAnim(frames, opts) {
+        const lines = [];
+        if (opts.title) {
+            lines.push("# " + opts.title);
+        }
+        lines.push("# Generated with the moofetch .anim converter");
+        lines.push("!fps " + opts.fps);
+        lines.push("!loop " + opts.loop);
+        if (opts.loop === 0) {
+            lines.push("!timeout " + opts.timeout);
+        }
+        if (opts.hold) {
+            lines.push("!hold " + opts.hold);
+        }
+        for (const frame of frames) {
+            lines.push("---");
+            for (const line of frame) {
+                lines.push(line);
+            }
+        }
+        return lines.join("\n") + "\n";
+    }
+
+    function targetHeight(sourceWidth, sourceHeight, width) {
+        // terminal cells are roughly twice as tall as wide
+        return Math.max(1, Math.round(sourceHeight * (width / sourceWidth) / 2));
+    }
+
+    // ------------------------------------------------------------------ browser only
+
+    const api = { pixelsToLines, buildAnim, targetHeight, CHARSETS };
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = api;
+    }
+    if (typeof document === "undefined") {
+        return; // running under a test runner
+    }
+
+    const MAX_FRAMES = 120;
+    const MAX_CELL_WIDTH = 200;
+    const els = {};
+    for (const id of ["drop", "file", "browse", "width", "fps", "loop", "timeout", "hold",
+                      "charset", "color", "title", "trim", "invert", "status", "preview",
+                      "download", "copy"]) {
+        els[id] = document.getElementById(id);
+    }
+
+    let sourceCanvases = []; // normalized frames (already in terminal-cell aspect)
+    let rendered = []; // array of line arrays
+    let previewTimer = null;
+
+    function setStatus(message, isError) {
+        els.status.textContent = message;
+        els.status.className = isError ? "error" : "";
+    }
+
+    function options() {
+        return {
+            width: Math.min(160, Math.max(8, Number(els.width.value) || 40)),
+            fps: Math.min(60, Math.max(1, Number(els.fps.value) || 12)),
+            loop: Math.min(1000, Math.max(0, Number(els.loop.value) || 0)),
+            timeout: Math.min(600000, Math.max(1, Number(els.timeout.value) || 5000)),
+            hold: els.hold.value,
+            charset: els.charset.value,
+            color: els.color.value,
+            title: els.title.value.trim(),
+            trim: els.trim.checked,
+            invert: els.invert.checked,
+        };
+    }
+
+    // Downscale one decoded image to a cell-aspect canvas (max MAX_CELL_WIDTH wide) so
+    // frames stay small in memory even for large GIFs.
+    function normalizeFrame(bitmap) {
+        const naturalWidth = bitmap.displayWidth || bitmap.width;
+        const naturalHeight = bitmap.displayHeight || bitmap.height;
+        const natural = document.createElement("canvas");
+        natural.width = naturalWidth;
+        natural.height = naturalHeight;
+        const nctx = natural.getContext("2d", { willReadFrequently: true });
+        nctx.drawImage(bitmap, 0, 0);
+
+        const width = Math.min(MAX_CELL_WIDTH, naturalWidth);
+        const height = targetHeight(naturalWidth, naturalHeight, width);
+        const out = document.createElement("canvas");
+        out.width = width;
+        out.height = height;
+        const octx = out.getContext("2d", { willReadFrequently: true });
+        octx.imageSmoothingEnabled = true;
+        octx.drawImage(natural, 0, 0, naturalWidth, naturalHeight, 0, 0, width, height);
+        return out;
+    }
+
+    function trimCanvas(canvas) {
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let minX = canvas.width, minY = canvas.height, maxX = -1, maxY = -1;
+        for (let y = 0; y < canvas.height; y++) {
+            for (let x = 0; x < canvas.width; x++) {
+                if (data[(y * canvas.width + x) * 4 + 3] >= 128) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (maxX < minX || maxY < minY) {
+            return canvas;
+        }
+        const out = document.createElement("canvas");
+        out.width = maxX - minX + 1;
+        out.height = maxY - minY + 1;
+        out.getContext("2d").drawImage(canvas, minX, minY, out.width, out.height, 0, 0, out.width, out.height);
+        return out;
+    }
+
+    function pixelsOf(normalized, opts) {
+        const width = Math.min(opts.width, normalized.width);
+        const height = Math.max(1, Math.round(normalized.height * (width / normalized.width)));
+        const out = document.createElement("canvas");
+        out.width = width;
+        out.height = height;
+        const ctx = out.getContext("2d", { willReadFrequently: true });
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(normalized, 0, 0, width, height);
+        return ctx.getImageData(0, 0, width, height);
+    }
+
+    function render() {
+        if (sourceCanvases.length === 0) {
+            return;
+        }
+        const opts = options();
+        rendered = sourceCanvases.map((canvas) => {
+            const frame = opts.trim ? trimCanvas(canvas) : canvas;
+            const imageData = pixelsOf(frame, opts);
+            return pixelsToLines(imageData.data, imageData.width, imageData.height, opts);
+        });
+        const text = buildAnim(rendered, opts);
+        setStatus(sourceCanvases.length + " frame(s), " + opts.width + "x" + rendered[0].length +
+                  " cells, " + Math.round(text.length / 1024) + " KiB");
+        els.download.disabled = false;
+        els.copy.disabled = false;
+        startPreview(opts);
+    }
+
+    function ansiToHtml(lines) {
+        return lines.map((line) => {
+            let html = "";
+            let open = false;
+            const parts = line.split(/(\x1b\[38;2;\d+;\d+;\d+m)/);
+            for (const part of parts) {
+                const match = /^\x1b\[38;2;(\d+);(\d+);(\d+)m$/.exec(part);
+                if (match) {
+                    if (open) html += "</span>";
+                    html += '<span style="color:rgb(' + match[1] + "," + match[2] + "," + match[3] + ')">';
+                    open = true;
+                } else {
+                    html += part.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                }
+            }
+            return open ? html + "</span>" : html;
+        }).join("\n");
+    }
+
+    function startPreview(opts) {
+        stopPreview();
+        if (rendered.length === 0) {
+            return;
+        }
+        let index = 0;
+        const show = () => {
+            els.preview.innerHTML = ansiToHtml(rendered[index % rendered.length]);
+            index++;
+        };
+        show();
+        if (rendered.length > 1) {
+            previewTimer = setInterval(show, Math.max(20, Math.round(1000 / opts.fps)));
+        }
+    }
+
+    function stopPreview() {
+        if (previewTimer !== null) {
+            clearInterval(previewTimer);
+            previewTimer = null;
+        }
+    }
+
+    function mimeFromName(name) {
+        const extension = (name.split(".").pop() || "").toLowerCase();
+        return {
+            gif: "image/gif",
+            webp: "image/webp",
+            png: "image/png",
+            apng: "image/apng",
+            avif: "image/avif",
+        }[extension] || "";
+    }
+
+    async function decodeFiles(files) {
+        stopPreview();
+        sourceCanvases = [];
+        rendered = [];
+        els.download.disabled = true;
+        els.copy.disabled = true;
+
+        const images = files.filter((file) => file.type.startsWith("image/") || mimeFromName(file.name));
+        if (images.length === 0) {
+            setStatus("No image files selected.", true);
+            return;
+        }
+
+        try {
+            if (images.length === 1) {
+                const type = images[0].type || mimeFromName(images[0].name);
+                if (type && typeof ImageDecoder !== "undefined") {
+                    try {
+                        const decoder = new ImageDecoder({ data: await images[0].arrayBuffer(), type });
+                        await decoder.completed;
+                        const track = decoder.tracks.selectedTrack;
+                        let count = track.frameCount;
+                        if (count > MAX_FRAMES) {
+                            setStatus("GIF has " + count + " frames; using the first " + MAX_FRAMES + ".", true);
+                            count = MAX_FRAMES;
+                        }
+                        for (let i = 0; i < count; i++) {
+                            const { image } = await decoder.decode({ frameIndex: i });
+                            sourceCanvases.push(normalizeFrame(image));
+                            image.close();
+                        }
+                        decoder.close();
+                    } catch (error) {
+                        sourceCanvases = []; // fall through to static image handling below
+                    }
+                }
+            }
+
+            if (sourceCanvases.length === 0) {
+                const sorted = images.slice().sort((a, b) => a.name.localeCompare(b.name));
+                for (const file of sorted.slice(0, MAX_FRAMES)) {
+                    const bitmap = await createImageBitmap(file);
+                    sourceCanvases.push(normalizeFrame(bitmap));
+                    bitmap.close();
+                }
+            }
+
+            if (sourceCanvases.length === 0) {
+                setStatus("No frames could be decoded.", true);
+                return;
+            }
+            render();
+        } catch (error) {
+            setStatus("Could not decode image: " + error.message, true);
+        }
+    }
+
+    function currentText() {
+        return buildAnim(rendered, options());
+    }
+
+    // ------------------------------------------------------------------ UI wiring
+
+    els.drop.addEventListener("click", (event) => {
+        if (event.target !== els.browse) {
+            els.file.click();
+        }
+    });
+    els.browse.addEventListener("click", () => els.file.click());
+    els.file.addEventListener("change", () => decodeFiles(Array.from(els.file.files)));
+
+    for (const type of ["dragenter", "dragover"]) {
+        els.drop.addEventListener(type, (event) => {
+            event.preventDefault();
+            els.drop.classList.add("over");
+        });
+    }
+    for (const type of ["dragleave", "drop"]) {
+        els.drop.addEventListener(type, (event) => {
+            event.preventDefault();
+            els.drop.classList.remove("over");
+        });
+    }
+    els.drop.addEventListener("drop", (event) => {
+        if (event.dataTransfer && event.dataTransfer.files.length > 0) {
+            decodeFiles(Array.from(event.dataTransfer.files));
+        }
+    });
+
+    for (const id of ["width", "fps", "loop", "timeout", "hold", "charset", "color", "title", "trim", "invert"]) {
+        els[id].addEventListener("change", render);
+    }
+
+    els.download.addEventListener("click", () => {
+        const blob = new Blob([currentText()], { type: "text/plain" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = (els.title.value.trim().replace(/[^a-z0-9_-]+/gi, "_") || "animation") + ".anim";
+        link.click();
+        URL.revokeObjectURL(link.href);
+    });
+
+    els.copy.addEventListener("click", async () => {
+        try {
+            await navigator.clipboard.writeText(currentText());
+            setStatus("Copied to clipboard.");
+        } catch (error) {
+            setStatus("Copy failed: " + error.message, true);
+        }
+    });
+})();
+</script>
+</body>
+</html>
