@@ -12,12 +12,21 @@ logos**.
 ## Install
 
 **Prebuilt binary** — grab the latest tarball from
-[Releases](https://github.com/lilithmoder/moofetch/releases):
+[Releases](https://github.com/lilithmoder/moofetch/releases) and install it for your
+user (no `sudo` required):
 
 ```sh
 tar xzf moofetch-*-linux-amd64.tar.gz
-sudo install -Dm755 moofetch-*/moofetch /usr/local/bin/moofetch
-sudo install -Dm755 moofetch-*/mooflash /usr/local/bin/mooflash
+install -Dm755 moofetch-*/moofetch ~/.local/bin/moofetch
+install -Dm755 moofetch-*/mooflash ~/.local/bin/mooflash
+```
+
+`~/.local/bin` is `/home/<user>/.local/bin`. If it is not already on your `PATH`, add it
+in your shell config (`~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.fish`, …), e.g.:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"   # POSIX shells
+fish_add_path ~/.local/bin             # fish
 ```
 
 **From source** — see [Building](#building), or use the helper script:
