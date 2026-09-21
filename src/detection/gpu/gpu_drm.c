@@ -345,6 +345,13 @@ const char* ffDrmDetectAsahi(FFGPUResult* gpu, int fd) {
     #endif
 
 const char* ffDrmDetectNouveau(FFGPUResult* gpu, int fd) {
+    // Older libdrm/kernel headers lack the nouveau getparam API (added in libdrm 2.4.114).
+    // Detect that at compile time so the build works on older distributions too.
+    #ifndef NOUVEAU_GETPARAM_FB_SIZE
+        (void) gpu;
+        (void) fd;
+        return "nouveau getparam is not supported by the installed drm headers";
+    #else
     struct drm_nouveau_getparam getparam = {};
 
     getparam.param = NOUVEAU_GETPARAM_FB_SIZE;
@@ -363,6 +370,7 @@ const char* ffDrmDetectNouveau(FFGPUResult* gpu, int fd) {
     }
 
     return nullptr;
+    #endif
 }
 
 #endif // FF_HAVE_DRM
