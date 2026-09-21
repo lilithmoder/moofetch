@@ -9,12 +9,16 @@ Run from the repository root:
 
 Effects:
   * shimmer: a highlight band moves down the logo, swapping the art's color placeholders
+             (logos without color placeholders get an explicit `$1` base color first)
+  * spin:    the logo slowly rotates around its vertical axis (3D spin); horizontal
+             compression by cos(angle), characters sampled with nearest neighbour
   * dots:    the three status dots of the generic logo rotate their colors
   * spinner: a hand-written braille spinner
 
 See examples/README.md for the `.anim` file format.
 """
 
+import math
 import re
 from pathlib import Path
 
@@ -28,6 +32,7 @@ HEADER = """\
 # Format documentation: examples/README.md
 !fps {fps}
 !loop {loop}
+{hold}\
 """
 
 
@@ -39,6 +44,21 @@ def read_art(name: str) -> list[str]:
     return lines
 
 
+def has_placeholders(art: list[str]) -> bool:
+    return any(re.search(r"\$[0-9]", line) for line in art)
+
+
+def with_base_color(art: list[str]) -> list[str]:
+    """Give logos without color placeholders an explicit `$1` base color.
+
+    Upstream renders such logos in the logo's first color anyway, so this does not change
+    the static look; it makes the shimmer effect possible.
+    """
+    if has_placeholders(art):
+        return art
+    return [f"$1{line}" for line in art]
+
+
 def rotate_colors(line: str, mapping: dict[str, str]) -> str:
     # Simultaneous replacement (a naive sequential replace would swap the colors back)
     return re.sub(r"\$[0-9]", lambda match: mapping.get(match.group(0), match.group(0)), line)
@@ -46,6 +66,7 @@ def rotate_colors(line: str, mapping: dict[str, str]) -> str:
 
 def shimmer(art: list[str], frames: int = 8, band: int = 4, colors: int = 2) -> list[list[str]]:
     """A moving band of `band` lines where color placeholders are rotated."""
+    art = with_base_color(art)
     if colors == 2:
         mapping = {"$1": "$2", "$2": "$1"}
     else:  # 3-color rotation
@@ -63,8 +84,84 @@ def shimmer(art: list[str], frames: int = 8, band: int = 4, colors: int = 2) -> 
     return result
 
 
-def write_animation(name: str, title: str, frames: list[list[str]], fps: int = 12, loop: int = 2) -> None:
-    out = HEADER.format(title=title, fps=fps, loop=loop)
+def parse_grid(art: list[str]) -> list[list[tuple[str, int]]]:
+    """Split art into cells of (character, color index). Colors carry forward like upstream."""
+    grid = []
+    for line in art:
+        row = []
+        color = 1
+        i = 0
+        while i < len(line):
+            char = line[i]
+            if char == "$" and i + 1 < len(line):
+                nxt = line[i + 1]
+                if nxt.isdigit():
+                    color = int(nxt)
+                    i += 2
+                    continue
+                if nxt == "$":
+                    row.append(("$", color))
+                    i += 2
+                    continue
+            row.append((char, color))
+            i += 1
+        grid.append(row)
+    return grid
+
+
+def spin(art: list[str], frames: int = 36, min_scale: float = 0.06) -> list[list[str]]:
+    """Slowly rotate the logo around its vertical axis (3D spin).
+
+    The source art is compressed horizontally by cos(angle) and characters are sampled
+    with nearest neighbour; when cos(angle) is negative the logo shows its mirrored back
+    side, which is what makes the spin read as a rotation. The canvas keeps the original
+    width and height, so the animation occupies exactly the same terminal region as the
+    static logo.
+    """
+    grid = parse_grid(art)
+    height = len(grid)
+    width = max(len(row) for row in grid)
+    for row in grid:
+        row.extend([(" ", 1)] * (width - len(row)))
+
+    center = (width - 1) / 2
+    result = []
+    for frame in range(frames):
+        angle = 2 * math.pi * frame / frames
+        scale = math.cos(angle)
+        if abs(scale) < min_scale:
+            scale = min_scale if scale >= 0 else -min_scale
+
+        out = []
+        for y in range(height):
+            cells = []
+            last_non_space = -1
+            for x in range(width):
+                source_x = round(center + (x - center) / scale)
+                if 0 <= source_x < width and grid[y][source_x][0] != " ":
+                    cells.append(grid[y][source_x])
+                    last_non_space = x
+                else:
+                    cells.append((" ", 1))
+
+            line = []
+            current_color = None
+            for x in range(last_non_space + 1):
+                char, color = cells[x]
+                if char == " ":
+                    line.append(" ")
+                    continue
+                if color != current_color:
+                    line.append(f"${color}")
+                    current_color = color
+                line.append("$$" if char == "$" else char)
+            out.append("".join(line))
+        result.append(out)
+    return result
+
+
+def write_animation(name: str, title: str, frames: list[list[str]], fps: int = 12, loop: int = 2, hold: str | None = None) -> None:
+    out = HEADER.format(title=title, fps=fps, loop=loop, hold=f"!hold {hold}\n" if hold else "")
     for frame in frames:
         out += "---\n"
         for line in frame:
@@ -74,15 +171,61 @@ def write_animation(name: str, title: str, frames: list[list[str]], fps: int = 1
     print(f"wrote examples/{name}.anim ({len(frames)} frames)")
 
 
+# Distros rendered with the moving-highlight effect. The file name becomes the built-in
+# animation name and is matched (case-insensitively, `-` == `_`) against the detected OS id.
+SHIMMER_DISTROS = [
+    "arch",
+    "cachyos",
+    "debian",
+    "fedora",
+    "ubuntu",
+    "opensuse",
+    "opensuse_leap",
+    "opensuse_tumbleweed",
+    "linuxmint",
+    "pop",
+    "manjaro",
+    "endeavouros",
+    "garuda",
+    "nixos",
+    "gentoo",
+    "alpine",
+    "kali",
+    "void",
+    "elementary",
+    "zorin",
+    "mx",
+    "deepin",
+    "artix",
+    "rhel",
+    "rocky",
+    "almalinux",
+    "centos",
+    "slackware",
+    "raspbian",
+    "parrot",
+    "devuan",
+]
+
+
 def main() -> None:
-    write_animation("arch", "Arch Linux — moving highlight band", shimmer(read_art("arch")))
-    write_animation("ubuntu", "Ubuntu — moving highlight band", shimmer(read_art("ubuntu")))
-    write_animation("debian", "Debian — moving highlight band", shimmer(read_art("debian")))
-    write_animation("fedora", "Fedora — moving highlight band", shimmer(read_art("fedora")))
+    for name in SHIMMER_DISTROS:
+        art = read_art(name)
+        colors = 3 if name == "cachyos" else 2
+        write_animation(name, f"{name} — moving highlight band", shimmer(art, colors=colors))
+
+    # Slowly rotating logos (one 360° revolution, ~4.5 s, then freeze on the original)
     write_animation(
-        "cachyos",
-        "CachyOS — moving highlight band across three palette colors",
-        shimmer(read_art("cachyos"), colors=3),
+        "arch_rotate",
+        "Arch Linux — slow 3D spin around the vertical axis",
+        spin(read_art("arch")),
+        fps=8, loop=1, hold="first",
+    )
+    write_animation(
+        "cachyos_rotate",
+        "CachyOS — slow 3D spin around the vertical axis",
+        spin(read_art("cachyos")),
+        fps=8, loop=1, hold="first",
     )
 
     # Generic: rotate the color of the three status dots in the header line

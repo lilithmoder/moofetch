@@ -6,17 +6,16 @@ This directory contains the animations that ship with moofetch. They are:
 * **embedded into the moofetch binary at build time**, so they work without any data
   files installed.
 
-| File | Effect | Built-in name |
-|---|---|---|
-| `arch.anim` | Moving highlight band | `arch` |
-| `ubuntu.anim` | Moving highlight band | `ubuntu` |
-| `debian.anim` | Moving highlight band | `debian` |
-| `fedora.anim` | Moving highlight band | `fedora` |
-| `cachyos.anim` | Moving band across three palette colors | `cachyos` |
-| `default.anim` | Color-rotating status dots (generic logo) | `default` |
-| `spinner.anim` | Braille spinner (custom art) | `spinner` |
+| File | Effect |
+|---|---|
+| `arch`, `cachyos`, `debian`, `fedora`, `ubuntu`, `opensuse`, `opensuse_leap`, `opensuse_tumbleweed`, `linuxmint`, `pop`, `manjaro`, `endeavouros`, `garuda`, `nixos`, `gentoo`, `alpine`, `kali`, `void`, `elementary`, `zorin`, `mx`, `deepin`, `artix`, `rhel`, `rocky`, `almalinux`, `centos`, `slackware`, `raspbian`, `parrot`, `devuan` (`.anim`) | Moving highlight band over the distro's built-in ASCII art |
+| `arch_rotate.anim`, `cachyos_rotate.anim` | Slow 3D spin around the vertical axis: 36 frames, one 360° revolution in ~4.5 s, then freezes on the original logo |
+| `default.anim` | Color-rotating status dots (generic logo) |
+| `spinner.anim` | Braille spinner (custom art) |
 
-List them from the CLI with `moofetch --list-animations`.
+The file name is the built-in name; list them all with `moofetch --list-animations`.
+Distro names are matched against the detected OS id case-insensitively, with `-` and `_`
+treated as equal (so `opensuse-tumbleweed` finds `opensuse_tumbleweed.anim`).
 
 ## Usage
 
@@ -122,16 +121,22 @@ Two mechanisms can be mixed freely:
 
 ### From a GIF or image sequence
 
-`tools/gif2anim` converts an animated GIF into a `.anim` file using ImageMagick (frame
-extraction) and `chafa` (ANSI rendering):
+There are two converters:
 
-```sh
-python3 tools/gif2anim input.gif -o my.anim --width 30 --fps 12 --loop 2
-python3 tools/gif2anim --check my.anim   # validate an existing file
-```
+* **Browser converter** — open [`../web/index.html`](../web/index.html) (works offline,
+  nothing is uploaded), drag in a GIF or a set of image frames, preview the animation,
+  tweak width/fps/charset/colors and download the `.anim`. This is the easiest option and
+  needs no installed tools.
+* **Command line** — `tools/gif2anim` uses ImageMagick (frame extraction) and `chafa`
+  (ANSI rendering):
 
-Run `python3 tools/gif2anim --help` for all options. Both `chafa` and ImageMagick
-(`magick` or `convert`) must be installed.
+  ```sh
+  python3 tools/gif2anim input.gif -o my.anim --width 30 --fps 12 --loop 2
+  python3 tools/gif2anim --check my.anim   # validate an existing file
+  ```
+
+  Run `python3 tools/gif2anim --help` for all options. Both `chafa` and ImageMagick
+  (`magick` or `convert`) must be installed.
 
 ### From a web GIF-to-ASCII converter
 
