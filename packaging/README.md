@@ -1,8 +1,8 @@
 # Packaging
 
-Packaging files for moofetch. **All of them contain a placeholder repository URL
-(`https://github.com/moofetch/moofetch`)** — update it (and any checksums) once the fork
-has a real home, then they are ready to use.
+Packaging files for moofetch, pointing at <https://github.com/lilithmoder/moofetch>. The Homebrew formula still needs the
+release tarball's `sha256` (see the TODO in the file) and the AUR `Maintainer:` line needs
+a valid email before submitting.
 
 | File | Target | Status |
 |---|---|---|

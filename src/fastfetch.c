@@ -880,7 +880,7 @@ static void writeConfigFile(FFdata* data) {
     yyjson_mut_doc* doc = data->resultDoc;
     yyjson_mut_val* root = yyjson_mut_obj(doc);
     yyjson_mut_doc_set_root(doc, root);
-    yyjson_mut_obj_add_str(doc, root, "$schema", "https://github.com/moofetch/moofetch/raw/master/doc/json_schema.json");
+    yyjson_mut_obj_add_str(doc, root, "$schema", "https://github.com/lilithmoder/moofetch/raw/master/doc/json_schema.json");
 
     if (data->docType == FF_RESULT_DOC_TYPE_CONFIG_FULL) {
         ffOptionsGenerateLogoJsonConfig(data, &instance.config.logo);

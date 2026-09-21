@@ -4,7 +4,7 @@ project(moofetch
     VERSION 0.1.0
     LANGUAGES C
     DESCRIPTION "Animated ASCII-logo system information tool (fork of fastfetch)"
-    HOMEPAGE_URL "https://github.com/moofetch/moofetch"
+    HOMEPAGE_URL "https://github.com/lilithmoder/moofetch"
 )
 
 set(PROJECT_LICENSE "MIT license")
@@ -2368,7 +2368,7 @@ endif()
 
 set(CPACK_SET_DESTDIR ON)
 
-set(CPACK_PACKAGE_CONTACT "Carter Li <zhangsongcui@live.cn>")
+set(CPACK_PACKAGE_CONTACT "lilithmoder <https://github.com/lilithmoder/moofetch>")
 set(CPACK_PACKAGE_DESCRIPTION "\
 moofetch is a system information tool (a fork of fastfetch) with support for animated ASCII logos. \
 It is written mostly in C to achieve much better performance.\

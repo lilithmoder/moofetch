@@ -37,8 +37,8 @@ upstream project (and would be misleading or broken in this fork):
 - `debian/` packaging (upstream package metadata) — add fork-specific packaging if needed
 - `screenshots/`, `README-cn.md`
 
-## TODOs for the fork owner
+## Fork home
 
-- The repository URL `https://github.com/moofetch/moofetch` is a **placeholder** used in
-  `$schema` output and package metadata. Update it (and `CPACK_PACKAGE_CONTACT` in
-  `CMakeLists.txt`) once the real repository/owner is known.
+The fork lives at <https://github.com/lilithmoder/moofetch>; `$schema` output and package metadata point there.
+The AUR `Maintainer:` line and the Homebrew `sha256` still need real values before
+publishing (see `packaging/README.md`).

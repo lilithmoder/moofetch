@@ -1,11 +1,11 @@
-# Maintainer: moofetch maintainers <maintainers@example.com>
-# TODO: update the URL and maintainer line before submitting to the AUR.
+# Maintainer: lilithmoder <https://github.com/lilithmoder>
+# Note: the AUR requires a valid email address in the Maintainer line before submitting.
 pkgname=moofetch-git
 pkgver=r0.1.0.2.g75156eb
 pkgrel=1
 pkgdesc="System information tool with animated ASCII logos (fastfetch fork)"
 arch=('x86_64' 'aarch64')
-url="https://github.com/moofetch/moofetch"
+url="https://github.com/lilithmoder/moofetch"
 license=('MIT')
 depends=('glibc')
 makedepends=('cmake' 'gcc' 'python')

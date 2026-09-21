@@ -23,7 +23,7 @@ stdenv.mkDerivation {
 
     meta = {
         description = "System information tool with animated ASCII logos (fastfetch fork)";
-        homepage = "https://github.com/moofetch/moofetch";
+        homepage = "https://github.com/lilithmoder/moofetch";
         license = lib.licenses.mit;
         mainProgram = "moofetch";
         platforms = lib.platforms.unix;
