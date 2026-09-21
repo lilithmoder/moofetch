@@ -283,8 +283,13 @@ bool ffAnimationParseData(const char* data, FFAnimation* animation, FFstrbuf* er
             if (width > maxWidth) {
                 maxWidth = width;
             }
+            // Frames do not end with a newline: this matches how upstream logo files are
+            // parsed, so an animation frame occupies exactly as many rows as the same art
+            // printed as a static logo (see ffAnimationBegin for the region height).
+            if (k > i) {
+                ffStrbufAppendC(frame, '\n');
+            }
             ffStrbufAppend(frame, line);
-            ffStrbufAppendC(frame, '\n');
             totalBytes += line->length + 1;
         }
 
@@ -304,17 +309,18 @@ bool ffAnimationParseData(const char* data, FFAnimation* animation, FFstrbuf* er
         return false;
     }
 
-    // Pad all frames to the same height so every frame produces the same logo region
+    // Pad all frames to the same height so every frame produces the same logo region.
+    // Frames end without a trailing newline, so a frame with N lines has N-1 newlines.
     FF_LIST_FOR_EACH (FFstrbuf, frame, animation->frames) {
-        uint32_t frameLines = 0;
+        uint32_t frameNewlines = 0;
         for (uint32_t k = 0; k < frame->length; ++k) {
             if (frame->chars[k] == '\n') {
-                ++frameLines;
+                ++frameNewlines;
             }
         }
-        while (frameLines < maxLines) {
+        while (frameNewlines < maxLines - 1) {
             ffStrbufAppendC(frame, '\n');
-            ++frameLines;
+            ++frameNewlines;
         }
     }
 
@@ -484,6 +490,10 @@ static bool animationCanAnimate(void) {
 #endif
 }
 
+bool ffAnimationHasBuiltinForOS(void) {
+    return animationGetBuiltinForOS() != nullptr;
+}
+
 void ffAnimationPrint(void) {
     FFOptionsLogo* options = &instance.config.logo;
 
@@ -515,7 +525,9 @@ bool ffAnimationBegin(void) {
     }
 
     gAnimationInfoLines = instance.state.keysHeight;
-    gAnimationRegionHeight = instance.state.logoHeight;
+    // Frames end without a trailing newline, so upstream's line parser counts one line
+    // less than the frame has; the last line is still printed from the line cache.
+    gAnimationRegionHeight = instance.config.logo.paddingTop + gAnimation.height;
     gAnimationEligible = true;
     return true;
 }

@@ -182,6 +182,21 @@ def test_config_file():
     os.remove(cfg)
 
 
+def test_tall_logo():
+    print("test: tall logo (logo taller than the info block) animates correctly")
+    output, code = run_pty([
+        "--logo-type", "animation", "--logo", "arch",
+        "--structure", "title:os",
+        "--logo-animation-fps", "60", "--logo-animation-loop", "2",
+    ])
+    text = output.decode("utf-8", "replace")
+    check(code == 0, f"exit code 0 (got {code})")
+    frame_writes = text.count("\x1b[?2026h")
+    check(frame_writes >= 16, f"at least 16 frame redraws, got {frame_writes}")
+    check("\x1b[?25h" in text, "cursor restored")
+    check("\x1b[K" not in text, "info columns never touched")
+
+
 def test_hold_first_static():
     print("test: --logo-animation-hold first freezes on the first frame when piped")
     proc = subprocess.run(
@@ -204,6 +219,7 @@ def main():
     test_sigint_restores_cursor()
     test_pipe_mode_is_static()
     test_config_file()
+    test_tall_logo()
     test_hold_first_static()
     if failures:
         print(f"\n{len(failures)} test(s) failed")

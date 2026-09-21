@@ -36,6 +36,9 @@ void ffAnimationDestroy(FFAnimation* animation);
 // Called by ffLogoPrint() when logo type is `animation`.
 void ffAnimationPrint(void);
 
+// True when a builtin animation exists for the detected OS (used by the default logo type).
+bool ffAnimationHasBuiltinForOS(void);
+
 // Called by run() after all info has been printed. Returns true when the animation
 // should play; in that case ffLogoPrintRemaining() must still be called before ffFinish().
 bool ffAnimationBegin(void);

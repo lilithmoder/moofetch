@@ -27,10 +27,18 @@ still be cherry-picked manually if ever needed.
 - `moofetch` still reads fastfetch's config/data directories as a fallback (see
   `README.md` and `PLAN.md` §8.5) for drop-in compatibility.
 
+## Fork cleanup
+
+The following upstream project artifacts were removed because they are specific to the
+upstream project (and would be misleading or broken in this fork):
+
+- `.github/workflows/*` (upstream build matrix) — replaced with `ci.yml` and `release.yml`
+- `.github/FUNDING.yml`, issue templates, stale/dependabot config, benchmark dashboard
+- `debian/` packaging (upstream package metadata) — add fork-specific packaging if needed
+- `screenshots/`, `README-cn.md`
+
 ## TODOs for the fork owner
 
 - The repository URL `https://github.com/moofetch/moofetch` is a **placeholder** used in
   `$schema` output and package metadata. Update it (and `CPACK_PACKAGE_CONTACT` in
   `CMakeLists.txt`) once the real repository/owner is known.
-- `debian/` and `.github/workflows/` contain upstream packaging/CI and need adapting for
-  this fork (tracked in `PLAN.md` Phase 5).

@@ -1,3 +1,7 @@
+> **Note:** This file documents the history of upstream fastfetch up to release `2.68.1`,
+> from which moofetch was forked. See `UPSTREAM.md` for provenance and the git history for
+> moofetch's own changes.
+
 # 2.68.1
 
 Changes:

@@ -15,6 +15,7 @@ Effects:
 See examples/README.md for the `.anim` file format.
 """
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -39,9 +40,8 @@ def read_art(name: str) -> list[str]:
 
 
 def rotate_colors(line: str, mapping: dict[str, str]) -> str:
-    for old, new in mapping.items():
-        line = line.replace(old, new)
-    return line
+    # Simultaneous replacement (a naive sequential replace would swap the colors back)
+    return re.sub(r"\$[0-9]", lambda match: mapping.get(match.group(0), match.group(0)), line)
 
 
 def shimmer(art: list[str], frames: int = 8, band: int = 4, colors: int = 2) -> list[list[str]]:

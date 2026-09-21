@@ -613,6 +613,13 @@ void ffLogoPrint(void) {
         return;
     }
 
+    // With the default logo type, prefer a builtin animation for the detected OS when one
+    // exists (this fork's whole point), and fall back to the static logo otherwise.
+    if (options->type == FF_LOGO_TYPE_AUTO && options->source.length == 0 && ffAnimationHasBuiltinForOS()) {
+        ffAnimationPrint();
+        return;
+    }
+
     // If the source is not set, we can directly print the detected logo.
     if (options->source.length == 0) {
         ffLogoPrintDetected(options->type == FF_LOGO_TYPE_SMALL ? FF_LOGO_SIZE_SMALL : FF_LOGO_SIZE_NORMAL);

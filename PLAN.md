@@ -679,4 +679,47 @@ ANSI references used in §7:
 - Cursor hide/show: `ESC[?25l` / `ESC[?25h`
 - Synchronized output (DEC 2026): `ESC[?2026h` / `ESC[?2026l`
 
+## 19. Implementation status (2026-09-21)
+
+All phases are implemented and verified on the `moofetch` hard fork:
+
+| Phase | Status | Where |
+|---|---|---|
+| 0 — Fork & rebrand | Done | `UPSTREAM.md`, renamed binaries/dirs/docs |
+| 1 — `.anim` parser | Done | `src/logo/animation.c` (+ `animation.h`) |
+| 2 — Renderer | Done | `src/logo/animation.c`, hooks in `src/logo/logo.c` |
+| 3 — Config/CLI | Done | `src/options/logo.*`, `src/fastfetch.c`, docs/schema/man |
+| 4 — Content | Done | `examples/*.anim`, `examples/README.md`, `tools/gif2anim`, `tools/gen-animations.py` |
+| 5 — QA & release | Done | `tests/pty_smoke.py`, `tests/config_compat.sh`, `.github/workflows/{ci,release}.yml` |
+
+Verified:
+
+- `tests/pty_smoke.py` — animation playback, hold frames, infinite timeout, SIGINT
+  cleanup, pipe-mode static output, config-file options, tall logos.
+- `tests/config_compat.sh` — deterministic info output and **all builtin logos render
+  byte-identically** to stock fastfetch 2.68.1; all presets run cleanly; fastfetch config
+  fallback and `moofetch/` precedence work.
+- `cmake --install` installs `moofetch`, `mooflash`, man page, bash/zsh/fish completions
+  and presets under `share/moofetch/`.
+
+Deviations from this plan:
+
+- Upstream **release 2.68.1 has no `animationFrame` field** (it exists only on upstream
+  `dev`), so there is no naming collision at all. Our options are `logo.animation` and
+  `--logo-animation-{fps,loop,timeout,hold}`; `--list-animations` was added.
+- Animation data is embedded with **pure CMake** (`fastfetch_load_text` + `file(WRITE)`),
+  no Python codegen step is required.
+- The DSR cursor query is performed **once after printing**; the region start row is
+  derived from the final cursor row and the known line counts (scroll-safe, simpler than
+  two queries).
+- Frames are normalized to **not** end with a trailing newline, mirroring how upstream
+  parses logo files; this keeps piped output byte-identical to the static logo.
+- Bare `moofetch` prefers a builtin animation for the detected OS (plan §5). Piped output
+  is unaffected because the hold frame has the same characters as the static logo.
+- The interactive `--gen-config` UI offers the new `animation` logo type; the
+  non-interactive `--gen-config` keeps upstream behaviour (modules only).
+- Upstream project artifacts (`debian/`, upstream CI matrix, issue templates,
+  `screenshots/`, `README-cn.md`) were removed as part of the hard fork; see `UPSTREAM.md`.
+- Stretch goals (§17) remain unimplemented.
+
 End of document.
