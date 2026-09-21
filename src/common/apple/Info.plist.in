@@ -3,7 +3,7 @@
 <plist version="1.0">
   <dict>
     <key>CFBundleIdentifier</key>
-    <string>fastfetch</string>
+    <string>moofetch</string>
     <key>CFBundleName</key>
     <string>@PROJECT_NAME@</string>
     <key>CFBundleShortVersionString</key>

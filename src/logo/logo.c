@@ -481,14 +481,17 @@ static bool updateLogoPath(void) {
 
     FF_LIST_FOR_EACH (FFstrbuf, dataDir, instance.state.platform.dataDirs) {
         // We need to copy it, because multiple threads might be using dataDirs at the same time
-        ffStrbufSet(&fullPath, dataDir);
-        ffStrbufAppendS(&fullPath, "fastfetch/logos/");
-        ffStrbufAppend(&fullPath, &options->source);
+        const char* const logoDirNames[] = { "moofetch/logos/", "fastfetch/logos/" };
+        for (uint8_t i = 0; i < 2; ++i) {
+            ffStrbufSet(&fullPath, dataDir);
+            ffStrbufAppendS(&fullPath, logoDirNames[i]);
+            ffStrbufAppend(&fullPath, &options->source);
 
-        if (ffPathExists(fullPath.chars, FF_PATHTYPE_FILE)) {
-            ffStrbufDestroy(&options->source);
-            ffStrbufInitMove(&options->source, &fullPath);
-            return true;
+            if (ffPathExists(fullPath.chars, FF_PATHTYPE_FILE)) {
+                ffStrbufDestroy(&options->source);
+                ffStrbufInitMove(&options->source, &fullPath);
+                return true;
+            }
         }
     }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-_fastfetch() {
+_moofetch() {
   # Use Bash built-in variables directly
   local cur="${COMP_WORDS[COMP_CWORD]}"
   local prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -19,14 +19,14 @@ _fastfetch() {
       ;;
     --logo|-l)
       local -a logos
-      readarray -t logos < <(fastfetch --list-logos autocompletion 2>/dev/null)
+      readarray -t logos < <(moofetch --list-logos autocompletion 2>/dev/null)
       logos+=("none" "small")
       COMPREPLY=($(compgen -W "${logos[*]}" -- "$cur"))
       return
       ;;
     --config|-c)
       local -a presets
-      readarray -t presets < <(fastfetch --list-presets autocompletion 2>/dev/null)
+      readarray -t presets < <(moofetch --list-presets autocompletion 2>/dev/null)
       presets+=("none")
       COMPREPLY=($(compgen -W "${presets[*]}" -- "$cur"))
       # Also allow file path completion
@@ -40,13 +40,13 @@ _fastfetch() {
     --structure|-s)
       # Get all module names in lowercase only
       local -a structures
-      readarray -t structures < <(fastfetch --list-modules autocompletion 2>/dev/null | cut -d':' -f1 | tr '[:upper:]' '[:lower:]')
+      readarray -t structures < <(moofetch --list-modules autocompletion 2>/dev/null | cut -d':' -f1 | tr '[:upper:]' '[:lower:]')
       COMPREPLY=($(compgen -W "${structures[*]}" -- "$cur"))
       return
       ;;
     --help|-h)
       local -a modules
-      readarray -t modules < <(fastfetch --list-modules autocompletion 2>/dev/null)
+      readarray -t modules < <(moofetch --list-modules autocompletion 2>/dev/null)
       # Convert to lowercase and keep only module names
       local -a module_names=()
       for module in "${modules[@]}"; do
@@ -85,8 +85,8 @@ import subprocess
 
 def main(current):
     try:
-        # Use fastfetch --help-raw to get option data
-        output = subprocess.check_output(['fastfetch', '--help-raw'], stderr=subprocess.DEVNULL)
+        # Use moofetch --help-raw to get option data
+        output = subprocess.check_output(['moofetch', '--help-raw'], stderr=subprocess.DEVNULL)
         data = json.loads(output)
 
         for category in data.values():
@@ -118,4 +118,4 @@ EOF
 }
 
 # Register completion
-complete -F _fastfetch fastfetch
+complete -F _moofetch moofetch

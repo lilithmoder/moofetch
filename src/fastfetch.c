@@ -97,11 +97,11 @@ static void printCommandFormatHelp(const char* command) {
 
 [[gnu::cold]]
 static void printFullHelp() {
-    fputs("Fastfetch is a neofetch-like tool for fetching system information and displaying them in a pretty way\n\n", stdout);
+    fputs("Moofetch is a system information tool with animated ASCII logos (a fork of fastfetch)\n\n", stdout);
     if (!instance.config.display.pipe) {
-        fputs("\e[1;4mUsage:\e[m \e[1mfastfetch\e[m \e[3m<?options>\e[m\n\n", stdout);
+        fputs("\e[1;4mUsage:\e[m \e[1m" FASTFETCH_PROJECT_NAME "\e[m \e[3m<?options>\e[m\n\n", stdout);
     } else {
-        fputs("Usage: fastfetch <?options>\n\n", stdout);
+        fputs("Usage: " FASTFETCH_PROJECT_NAME " <?options>\n\n", stdout);
     }
 
     yyjson_doc* doc = yyjson_read(FASTFETCH_DATATEXT_JSON_HELP, strlen(FASTFETCH_DATATEXT_JSON_HELP), YYJSON_READ_NOFLAG);
@@ -329,6 +329,10 @@ static void printCommandHelp(const char* command) {
 [[gnu::cold]]
 static void listAvailablePresets(bool pretty) {
     FF_LIST_FOR_EACH (FFstrbuf, path, instance.state.platform.dataDirs) {
+        uint32_t length = path->length;
+        ffStrbufAppendS(path, "moofetch/presets/");
+        ffListFilesRecursively(path->chars, pretty);
+        ffStrbufSubstrBefore(path, length);
         ffStrbufAppendS(path, "fastfetch/presets/");
         ffListFilesRecursively(path->chars, pretty);
     }
@@ -344,6 +348,10 @@ static void listAvailablePresets(bool pretty) {
 [[gnu::cold]]
 static void listAvailableLogos(void) {
     FF_LIST_FOR_EACH (FFstrbuf, path, instance.state.platform.dataDirs) {
+        uint32_t length = path->length;
+        ffStrbufAppendS(path, "moofetch/logos/");
+        ffListFilesRecursively(path->chars, true);
+        ffStrbufSubstrBefore(path, length);
         ffStrbufAppendS(path, "fastfetch/logos/");
         ffListFilesRecursively(path->chars, true);
     }
@@ -352,8 +360,12 @@ static void listAvailableLogos(void) {
 [[gnu::cold]]
 static void listConfigPaths(void) {
     FF_LIST_FOR_EACH (FFstrbuf, folder, instance.state.platform.configDirs) {
-        bool exists = false;
-        uint32_t length = folder->length + (uint32_t) strlen("fastfetch") + 1 /* trailing slash */;
+        uint32_t length = folder->length;
+        ffStrbufAppendS(folder, "moofetch/config.jsonc");
+        bool exists = ffPathExists(folder->chars, FF_PATHTYPE_FILE);
+        ffStrbufSubstrBefore(folder, length);
+        printf("%s%s\n", folder->chars, exists ? " (*)" : "");
+
         ffStrbufAppendS(folder, "fastfetch/config.jsonc");
         exists = ffPathExists(folder->chars, FF_PATHTYPE_FILE);
         ffStrbufSubstrBefore(folder, length);
@@ -364,6 +376,10 @@ static void listConfigPaths(void) {
 [[gnu::cold]]
 static void listDataPaths(void) {
     FF_LIST_FOR_EACH (FFstrbuf, folder, instance.state.platform.dataDirs) {
+        uint32_t length = folder->length;
+        ffStrbufAppendS(folder, "moofetch/");
+        puts(folder->chars);
+        ffStrbufSubstrBefore(folder, length);
         ffStrbufAppendS(folder, "fastfetch/");
         puts(folder->chars);
     }
@@ -448,9 +464,9 @@ static void setupGenConfigPath(FFdata* data, const char* filePath) {
         }
 
         FFstrbuf* configDir = FF_LIST_FIRST(FFstrbuf, instance.state.platform.configDirs);
-        ffStrbufEnsureFixedLengthFree(&data->genConfigPath, configDir->length + strlen("fastfetch/config.jsonc"));
+        ffStrbufEnsureFixedLengthFree(&data->genConfigPath, configDir->length + strlen("moofetch/config.jsonc"));
         ffStrbufSet(&data->genConfigPath, configDir);
-        ffStrbufAppendS(&data->genConfigPath, "fastfetch/config.jsonc");
+        ffStrbufAppendS(&data->genConfigPath, "moofetch/config.jsonc");
     } else {
         ffStrbufSetS(&data->genConfigPath, filePath);
     }
@@ -520,35 +536,41 @@ static void optionParseConfigFile(FFdata* data, const char* key, const char* val
 
     // Try to load as a relative path with the config directory
 
+    const char* const configDirNames[] = { "moofetch/", "fastfetch/" };
     FF_LIST_FOR_EACH (FFstrbuf, path, instance.state.platform.configDirs) {
-        ffStrbufSet(&absolutePath, path);
-        ffStrbufAppendS(&absolutePath, "fastfetch/");
-        ffStrbufAppendS(&absolutePath, value);
-        if (needExtension) {
-            ffStrbufAppendS(&absolutePath, ".jsonc");
-        }
+        for (uint8_t i = 0; i < 2; ++i) {
+            ffStrbufSet(&absolutePath, path);
+            ffStrbufAppendS(&absolutePath, configDirNames[i]);
+            ffStrbufAppendS(&absolutePath, value);
+            if (needExtension) {
+                ffStrbufAppendS(&absolutePath, ".jsonc");
+            }
 
-        if (parseJsoncFile(data, absolutePath.chars, flag)) {
-            return;
+            if (parseJsoncFile(data, absolutePath.chars, flag)) {
+                return;
+            }
         }
     }
 
     // Try to load as a preset
 
+    const char* const presetDirNames[] = { "moofetch/presets/", "fastfetch/presets/" };
     FF_LIST_FOR_EACH (FFstrbuf, path, instance.state.platform.dataDirs) {
-        ffStrbufSet(&absolutePath, path);
-        ffStrbufAppendS(&absolutePath, "fastfetch/presets/");
-        ffStrbufAppendS(&absolutePath, value);
-        if (needExtension) {
-            ffStrbufAppendS(&absolutePath, ".jsonc");
-        }
+        for (uint8_t i = 0; i < 2; ++i) {
+            ffStrbufSet(&absolutePath, path);
+            ffStrbufAppendS(&absolutePath, presetDirNames[i]);
+            ffStrbufAppendS(&absolutePath, value);
+            if (needExtension) {
+                ffStrbufAppendS(&absolutePath, ".jsonc");
+            }
 
-        if (parseJsoncFile(data, absolutePath.chars, flag)) {
-            return;
+            if (parseJsoncFile(data, absolutePath.chars, flag)) {
+                return;
+            }
         }
     }
 
-    // Try to load as a relative path with the directory of fastfetch binary, for Windows support
+    // Try to load as a relative path with the directory of moofetch binary, for Windows support
 
     if (instance.state.platform.exePath.length) {
         uint32_t lastSlash = ffStrbufLastIndexC(&instance.state.platform.exePath, '/') + 1;
@@ -732,21 +754,30 @@ static void parseOption(FFdata* data, const char* key, const char* value) {
 
 static void parseConfigFiles(FFdata* data) {
     if (__builtin_expect(data->genConfigPath.length == 0, true)) {
+        const char* const configDirNames[] = { "moofetch", "fastfetch" };
         FF_LIST_FOR_EACH (FFstrbuf, dir, instance.state.platform.configDirs) {
             uint32_t dirLength = dir->length;
 
-            ffStrbufAppendS(dir, "fastfetch/config.jsonc");
-            bool success = parseJsoncFile(data, dir->chars, YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS);
-            ffStrbufSubstrBefore(dir, dirLength);
-            if (success) {
-                return;
-            }
+            for (uint8_t i = 0; i < 2; ++i) {
+                ffStrbufAppendS(dir, configDirNames[i]);
+                ffStrbufAppendC(dir, '/');
+                uint32_t nameLength = dir->length;
 
-            ffStrbufAppendS(dir, "fastfetch/config.json5");
-            success = parseJsoncFile(data, dir->chars, YYJSON_READ_JSON5);
-            ffStrbufSubstrBefore(dir, dirLength);
-            if (success) {
-                return;
+                ffStrbufAppendS(dir, "config.jsonc");
+                bool success = parseJsoncFile(data, dir->chars, YYJSON_READ_ALLOW_COMMENTS | YYJSON_READ_ALLOW_TRAILING_COMMAS);
+                ffStrbufSubstrBefore(dir, nameLength);
+                if (success) {
+                    return;
+                }
+
+                ffStrbufAppendS(dir, "config.json5");
+                success = parseJsoncFile(data, dir->chars, YYJSON_READ_JSON5);
+                ffStrbufSubstrBefore(dir, nameLength);
+                if (success) {
+                    return;
+                }
+
+                ffStrbufSubstrBefore(dir, dirLength);
             }
         }
     }
@@ -842,7 +873,7 @@ static void writeConfigFile(FFdata* data) {
     yyjson_mut_doc* doc = data->resultDoc;
     yyjson_mut_val* root = yyjson_mut_obj(doc);
     yyjson_mut_doc_set_root(doc, root);
-    yyjson_mut_obj_add_str(doc, root, "$schema", "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json");
+    yyjson_mut_obj_add_str(doc, root, "$schema", "https://github.com/moofetch/moofetch/raw/master/doc/json_schema.json");
 
     if (data->docType == FF_RESULT_DOC_TYPE_CONFIG_FULL) {
         ffOptionsGenerateLogoJsonConfig(data, &instance.config.logo);

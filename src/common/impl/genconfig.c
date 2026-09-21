@@ -513,7 +513,7 @@ static void renderFrame(FFGenConfigUI* ui, FFstrbuf* out) {
     rowInit(&row, cols);
     rowAppendVisual(&row, "  ");
     rowAppendRaw(&row, FASTFETCH_TEXT_MODIFIER_BOLT);
-    rowAppendVisual(&row, "fastfetch");
+    rowAppendVisual(&row, "moofetch");
     rowAppendRaw(&row, FASTFETCH_TEXT_MODIFIER_RESET);
     rowAppendVisual(&row, " configuration");
     if (cols >= 48) {

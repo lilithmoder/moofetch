@@ -84,7 +84,7 @@ static const char* detectSound(FFSoundOptions* options, FFlist* devices) {
         return "Failed to get pulseaudio mainloop api";
     }
 
-    pa_context* context = ffpa_context_new(mainloopApi, "fastfetch");
+    pa_context* context = ffpa_context_new(mainloopApi, "moofetch");
     if (!context) {
         ffpa_mainloop_free(mainloop);
         return "Failed to create pulseaudio context";

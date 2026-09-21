@@ -21,6 +21,6 @@ case "${kernel_name}" in
         ;;
 esac
 
-cmake --build . --target fastfetch "${cmake_build_args}"
+cmake --build . --target moofetch "${cmake_build_args}"
 
-./fastfetch "$@"
+./moofetch "$@"

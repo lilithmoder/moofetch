@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.12.0) # Don't change before we investigate why #2553 happens
 
-project(fastfetch
-    VERSION 2.68.1
+project(moofetch
+    VERSION 0.1.0
     LANGUAGES C
-    DESCRIPTION "Fast neofetch-like system information tool"
-    HOMEPAGE_URL "https://github.com/fastfetch-cli/fastfetch"
+    DESCRIPTION "Animated ASCII-logo system information tool (fork of fastfetch)"
+    HOMEPAGE_URL "https://github.com/moofetch/moofetch"
 )
 
 set(PROJECT_LICENSE "MIT license")
@@ -390,17 +390,17 @@ if(ENABLE_EMBEDDED_AMDGPUIDS AND NOT EXISTS "${PROJECT_BINARY_DIR}/fastfetch_amd
 endif()
 
 if(Python_FOUND)
-    message(STATUS "Generating 'fastfetch.1'")
+    message(STATUS "Generating 'moofetch.1'")
     execute_process(COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen-man.py"
-                    OUTPUT_FILE "${PROJECT_BINARY_DIR}/fastfetch.1"
+                    OUTPUT_FILE "${PROJECT_BINARY_DIR}/moofetch.1"
                     RESULT_VARIABLE PYTHON_MANPAGE_RETCODE)
         if(NOT PYTHON_MANPAGE_RETCODE EQUAL 0)
-            message(FATAL_ERROR "Failed to generate 'fastfetch.1'")
+            message(FATAL_ERROR "Failed to generate 'moofetch.1'")
         endif()
 else()
-    message(WARNING "Python3 is not found, use basic 'fastfetch.1.in' instead")
+    message(WARNING "Python3 is not found, use basic 'moofetch.1.in' instead")
     string(TIMESTAMP FASTFETCH_BUILD_DATE "%d %B %Y" UTC)
-    configure_file(doc/fastfetch.1.in fastfetch.1 @ONLY)
+    configure_file(doc/moofetch.1.in moofetch.1 @ONLY)
 endif()
 
 fastfetch_encode_c_string("${DATATEXT_JSON_HELP}" DATATEXT_JSON_HELP)
@@ -1430,7 +1430,7 @@ if(ENABLE_TRACER)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
     elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -gcodeview -fuse-ld=lld")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--pdb=${CMAKE_BINARY_DIR}/fastfetch.pdb")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--pdb=${CMAKE_BINARY_DIR}/moofetch.pdb")
     endif()
 endif()
 
@@ -2131,61 +2131,61 @@ endif()
 # Executable targets #
 ######################
 
-add_executable(fastfetch
+add_executable(moofetch
     src/fastfetch.c
 )
-target_compile_definitions(fastfetch
-    PRIVATE FASTFETCH_TARGET_BINARY_NAME=fastfetch
+target_compile_definitions(moofetch
+    PRIVATE FASTFETCH_TARGET_BINARY_NAME=moofetch
 )
-target_link_libraries(fastfetch
+target_link_libraries(moofetch
     PRIVATE libfastfetch
 )
 
-# Prevent fastfetch from linking to libstdc++
+# Prevent moofetch from linking to libstdc++
 set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
 set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
-set_target_properties(fastfetch PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(moofetch PROPERTIES LINKER_LANGUAGE C)
 
 if(WIN32)
-    target_sources(fastfetch
+    target_sources(moofetch
         PRIVATE src/common/windows/version.rc
     )
 elseif(APPLE)
-    target_link_options(fastfetch
+    target_link_options(moofetch
         PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,Info.plist
     )
 endif()
 
 if(BINARY_LINK_TYPE STREQUAL "static")
-    target_link_options(fastfetch PRIVATE "-static")
+    target_link_options(moofetch PRIVATE "-static")
 endif()
 
-# Apply all above parameters to flashfetch if it is built
+# Apply all above parameters to mooflash if it is built
 if (BUILD_FLASHFETCH)
-    add_executable(flashfetch
+    add_executable(mooflash
         src/flashfetch.c
     )
-    target_compile_definitions(flashfetch
-        PRIVATE FASTFETCH_TARGET_BINARY_NAME=flashfetch
+    target_compile_definitions(mooflash
+        PRIVATE FASTFETCH_TARGET_BINARY_NAME=mooflash
     )
-    target_link_libraries(flashfetch
+    target_link_libraries(mooflash
         PRIVATE libfastfetch
     )
 
-    set_target_properties(flashfetch PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(mooflash PROPERTIES LINKER_LANGUAGE C)
 
     if(WIN32)
-        target_sources(flashfetch
+        target_sources(mooflash
             PRIVATE src/common/windows/version.rc
         )
     elseif(APPLE)
-        target_link_options(flashfetch
+        target_link_options(mooflash
             PRIVATE LINKER:-sectcreate,__TEXT,__info_plist,Info.plist
         )
     endif()
 
     if(BINARY_LINK_TYPE STREQUAL "static")
-        target_link_options(flashfetch PRIVATE "-static")
+        target_link_options(mooflash PRIVATE "-static")
     endif()
 endif()
 
@@ -2252,13 +2252,13 @@ endif()
 include(GNUInstallDirs)
 
 install(
-    TARGETS fastfetch
+    TARGETS moofetch
     DESTINATION "${CMAKE_INSTALL_BINDIR}"
 )
 
-if (TARGET flashfetch)
+if (TARGET mooflash)
     install(
-        TARGETS flashfetch
+        TARGETS mooflash
         DESTINATION "${CMAKE_INSTALL_BINDIR}"
     )
 endif()
@@ -2294,7 +2294,7 @@ if(INSTALL_LICENSE)
 endif()
 
 install(
-    FILES "${PROJECT_BINARY_DIR}/fastfetch.1"
+    FILES "${PROJECT_BINARY_DIR}/moofetch.1"
     DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
 )
 
@@ -2351,7 +2351,7 @@ set(CPACK_SET_DESTDIR ON)
 
 set(CPACK_PACKAGE_CONTACT "Carter Li <zhangsongcui@live.cn>")
 set(CPACK_PACKAGE_DESCRIPTION "\
-fastfetch is a neofetch-like tool for fetching system information and displaying them in a pretty way. \
+moofetch is a system information tool (a fork of fastfetch) with support for animated ASCII logos. \
 It is written mostly in C to achieve much better performance.\
 ")
 

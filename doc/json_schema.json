@@ -5,7 +5,7 @@
             "oneOf": [
                 {
                     "type": "string",
-                    "$comment": "https://github.com/fastfetch-cli/fastfetch/wiki/Color-Format-Specification",
+                    "$comment": "https://github.com/fastfetch-cli/moofetch/wiki/Color-Format-Specification",
                     "examples": [
                         "reset_", "bright_", "dim_", "italic_", "underline_", "blink_", "inverse_", "hidden_", "strike_", "light_",
                         "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white", "default"
@@ -561,16 +561,16 @@
     "type": "object",
     "additionalProperties": false,
     "title": "JSON config",
-    "description": "Fastfetch JSON config file. Usually located at `~/.config/fastfetch/config.jsonc`",
+    "description": "Moofetch JSON config file. Usually located at `~/.config/moofetch/config.jsonc`",
     "properties": {
         "$schema": {
             "type": "string",
             "description": "JSON Schema URL for validation and IDE support",
             "format": "uri",
-            "default": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json"
+            "default": "https://github.com/fastfetch-cli/moofetch/raw/dev/doc/json_schema.json"
         },
         "logo": {
-            "description": "Fastfetch logo configuration\nSee also https://github.com/fastfetch-cli/fastfetch/wiki/Logo-options",
+            "description": "Moofetch logo configuration\nSee also https://github.com/fastfetch-cli/moofetch/wiki/Logo-options",
             "oneOf": [
                 {
                     "description": "Disable logo",
@@ -582,7 +582,7 @@
                     "type": "string"
                 },
                 {
-                    "description": "Fastfetch logo configuration",
+                    "description": "Moofetch logo configuration",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -872,7 +872,7 @@
             ]
         },
         "general": {
-            "description": "General Fastfetch configuration",
+            "description": "General Moofetch configuration",
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -4644,7 +4644,7 @@
                                 "properties": {
                                     "type": {
                                         "const": "version",
-                                        "description": "Print the Fastfetch version and build information"
+                                        "description": "Print the Moofetch version and build information"
                                     },
                                     "key": {
                                         "$ref": "#/$defs/key"

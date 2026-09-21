@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 
 """
-Python script to generate a comprehensive man page for the command `fastfetch`.
+Python script to generate a comprehensive man page for the command `moofetch`.
 
 The generated man page content will be printed to stdout,
 so you will need to pipe it to a file if you want to save it.
-Example: python3 gen-man.py > fastfetch.1
+Example: python3 gen-man.py > moofetch.1
 
 The command options are generated using a JSON file.
 For the JSON file format, see:
-https://github.com/fastfetch-cli/fastfetch/blob/dev/src/data/help.json
+https://github.com/fastfetch-cli/moofetch/blob/dev/src/data/help.json
 """
 
 from json import load
@@ -37,25 +37,25 @@ pathToHelpFile = path.join(pathToCurrentDir, "../doc/help.json")
 # man page section
 manSection = 1
 # title (center header)
-titlePage = "FASTFETCH"
+titlePage = "MOOFETCH"
 # date (center footer)
 # format : "Month (abbreviation) Day Year"
 todayDate = datetime.fromtimestamp(
     int(environ.get("SOURCE_DATE_EPOCH", time())),
     tz=timezone.utc,
 ).strftime("%b %d %Y")
-# file to fastfetch version (left footer)
+# file to moofetch version (left footer)
 pathToVersionFile = path.join(pathToCurrentDir, "../CMakeLists.txt")
 
 
 ###### Sections Text ######
 
 # text displayed in the "NAME" section
-nameSection = r"fastfetch \- A fast and feature-rich system information tool similar to neofetch"
+nameSection = r"moofetch \- A fast and feature-rich system information tool similar to neofetch"
 
 # text displayed in the "DESCRIPTION" section
 descriptionSection = r"""
-Fastfetch is a tool for displaying system information in a visually appealing way. Written primarily in C, it focuses on performance and customizability while providing functionality similar to neofetch.
+Moofetch is a tool for displaying system information in a visually appealing way. Written primarily in C, it focuses on performance and customizability while providing functionality similar to neofetch.
 It supports Linux, Android, FreeBSD, macOS, and Windows 7 or newer.
 """
 
@@ -66,10 +66,10 @@ Options are parsed in a case-insensitive manner. For example, \fB--logo-type\fR 
 Arguments in square brackets are optional. Optional boolean arguments default to 'true' when specified without a value.
 
 For more detailed information about a specific option, use:
-\fBfastfetch -h <option_name_without_dashes>\fR
+\fBmoofetch -h <option_name_without_dashes>\fR
 
 Any combination of options can be made permanent by generating a configuration file:
-\fBfastfetch <options> --gen-config\fR
+\fBmoofetch <options> --gen-config\fR
 """
 
 # text displayed in the "CONFIGURATION"
@@ -84,51 +84,51 @@ To list all available modules, use {startBold}--list-modules{endBold}
 
 .SS Config Files
 
-Fastfetch uses JSONC (JSON with Comments) for configuration files. These files must have the .jsonc extension.
+Moofetch uses JSONC (JSON with Comments) for configuration files. These files must have the .jsonc extension.
 
-You can generate a default config file using {startBold}--gen-config{endBold}. By default, the config file is saved at {startBold}~/.config/fastfetch/config.jsonc{endBold}.
+You can generate a default config file using {startBold}--gen-config{endBold}. By default, the config file is saved at {startBold}~/.config/moofetch/config.jsonc{endBold}.
 
 The configuration/preset files are searched in the following locations (in order):
 
 {startBold}1.{endBold} Relative to the current working directory
 
-{startBold}2.{endBold} Relative to ~/.local/share/fastfetch/presets/
+{startBold}2.{endBold} Relative to ~/.local/share/moofetch/presets/
 
-{startBold}3.{endBold} Relative to /usr/share/fastfetch/presets/
+{startBold}3.{endBold} Relative to /usr/share/moofetch/presets/
 
 For detailed information on logo options, module configuration, and formatting, visit:
-{startBold}https://github.com/fastfetch-cli/fastfetch/wiki/Configuration{endBold}
+{startBold}https://github.com/fastfetch-cli/moofetch/wiki/Configuration{endBold}
 
-Fastfetch provides several built-in presets. List them with {startBold}--list-presets{endBold}.
+Moofetch provides several built-in presets. List them with {startBold}--list-presets{endBold}.
 
 .SS JSON Schema
 A JSON schema is available for editor intelligence when editing the configuration file. Add the following line at the beginning of your config file:
 
-{startBold}"$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json"{endBold}
+{startBold}"$schema": "https://github.com/fastfetch-cli/moofetch/raw/dev/doc/json_schema.json"{endBold}
 """
 
 # text displayed in the "EXAMPLE" section
 exampleSection = f"""
 .SS Basic Usage
-{startBold}fastfetch{endBold}
+{startBold}moofetch{endBold}
 
 .SS Use a specific logo
-{startBold}fastfetch --logo arch{endBold}
+{startBold}moofetch --logo arch{endBold}
 
 .SS Custom structure
-{startBold}fastfetch --structure title:os:kernel:uptime:memory{endBold}
+{startBold}moofetch --structure title:os:kernel:uptime:memory{endBold}
 
 .SS Generate a config file
-{startBold}fastfetch --gen-config{endBold}
+{startBold}moofetch --gen-config{endBold}
 
 .SS Use a preset
-{startBold}fastfetch --config neofetch{endBold}
+{startBold}moofetch --config neofetch{endBold}
 
 .SS Config File Example
 .nf
-// ~/.config/fastfetch/config.jsonc
+// ~/.config/moofetch/config.jsonc
 {{
-    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "$schema": "https://github.com/fastfetch-cli/moofetch/raw/dev/doc/json_schema.json",
     "logo": {{
         "type": "auto",
         "source": "arch"
@@ -159,10 +159,10 @@ exampleSection = f"""
 """
 
 # text displayed in the "BUGS" section
-bugSection = "Please report bugs to: https://github.com/fastfetch-cli/fastfetch/issues"
+bugSection = "Please report bugs to: https://github.com/fastfetch-cli/moofetch/issues"
 
 # text displayed in the "AUTHORS" section
-authorsSection = "Fastfetch is developed by a team of contributors on GitHub.\nVisit https://github.com/fastfetch-cli/fastfetch for more information."
+authorsSection = "Moofetch is developed by a team of contributors on GitHub.\nVisit https://github.com/fastfetch-cli/moofetch for more information."
 
 
 ###### Argument decoration ######
@@ -192,7 +192,7 @@ def main():
 
     ###### header, footer & config #####
 
-    print(f".TH FASTFETCH {manSection} ", end=" ")
+    print(f".TH MOOFETCH {manSection} ", end=" ")
     print(f"\"{todayDate}\"", end=" ")
 
     # version number
@@ -202,7 +202,7 @@ def main():
         for line in versionFile:
             researchVersion = search(r"^\s*VERSION (\d+\.\d+\.\d+)$", line)
             if (researchVersion):
-                print(f"\"Fastfetch {researchVersion.group(1)}\"", end=" ")
+                print(f"\"Moofetch {researchVersion.group(1)}\"", end=" ")
                 break
 
     print(f"\"{titlePage}\"")
@@ -217,7 +217,7 @@ def main():
     ##### Synopsis ######
 
     print(".SH SYNOPSIS")
-    print(".B fastfetch")
+    print(".B moofetch")
     print(f"[{startUnderline}OPTIONS{endUnderline}...]")
 
 
