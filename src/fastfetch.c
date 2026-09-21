@@ -2,6 +2,7 @@
 #include "common/ffdata.h"
 #include "detection/version/version.h"
 #include "logo/logo.h"
+#include "logo/animation.h"
 #include "common/commandoption.h"
 #include "common/genconfig.h"
 #include "common/init.h"
@@ -688,6 +689,8 @@ static void parseCommand(FFdata* data, char* key, char* value) {
                 puts("\nCustom logos:");
                 listAvailableLogos();
             }
+        } else if (ffStrEqualsIgnCase(subkey, "animations")) {
+            ffAnimationListBuiltins();
         } else {
             fprintf(stderr, "Error: unsupported list option: %s\n", key);
             exit(415);
@@ -859,10 +862,14 @@ static void run(FFdata* data) {
     if (data->resultDoc) {
         yyjson_mut_write_fp(stdout, data->resultDoc, YYJSON_WRITE_INF_AND_NAN_AS_NULL | YYJSON_WRITE_PRETTY_TWO_SPACES | YYJSON_WRITE_NEWLINE_AT_END, nullptr, nullptr);
     } else {
-        if (instance.config.logo.printRemaining) {
+        bool animate = ffAnimationBegin();
+        if (instance.config.logo.printRemaining || animate) {
             ffLogoPrintRemaining();
         }
         ffFinish();
+        if (animate) {
+            ffAnimationRun();
+        }
     }
 }
 

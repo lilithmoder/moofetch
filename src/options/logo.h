@@ -22,6 +22,7 @@ typedef enum FFLogoType: uint8_t {
     FF_LOGO_TYPE_IMAGE_CHAFA,        // image file, printed as ascii art using libchafa
     FF_LOGO_TYPE_IMAGE_RAW,          // image file, printed as raw binary string
     FF_LOGO_TYPE_NONE,               // `--logo none`, but still applies colors to the system information output (unless `--pipe` is set)
+    FF_LOGO_TYPE_ANIMATION,          // animated ascii logo, loaded from a `.anim` frame file or a builtin animation
 } FFLogoType;
 
 typedef enum FFLogoPosition: uint8_t {
@@ -44,6 +45,13 @@ typedef struct FFOptionsLogo {
     bool printRemaining;
     bool preserveAspectRatio;
     bool recache;
+
+    // FF_LOGO_TYPE_ANIMATION playback options.
+    // 0 / -1 mean "unset": the animation file directives are used, then built-in defaults.
+    uint32_t animationFps; // 0 = unset, otherwise 1 - 60
+    int32_t animationLoop; // -1 = unset, 0 = infinite, otherwise number of loops
+    uint32_t animationTimeout; // 0 = unset, otherwise milliseconds (only for infinite loops)
+    int32_t animationHold; // -1 = unset, 0 = hold first frame, 1 = hold last frame
 
 #if FF_HAVE_CHAFA
     bool chafaFgOnly;

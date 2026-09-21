@@ -19,6 +19,10 @@ void ffOptionsInitLogo(FFOptionsLogo* options) {
     options->preserveAspectRatio = false;
     options->recache = false;
     options->position = FF_LOGO_POSITION_LEFT;
+    options->animationFps = 0;
+    options->animationLoop = -1;
+    options->animationTimeout = 0;
+    options->animationHold = -1;
 
 #if FF_HAVE_CHAFA
     options->chafaFgOnly = false;
@@ -68,6 +72,7 @@ bool ffOptionsParseLogoCommandLine(FFOptionsLogo* options, const char* key, cons
                                                                            { "chafa", FF_LOGO_TYPE_IMAGE_CHAFA },
                                                                            { "raw", FF_LOGO_TYPE_IMAGE_RAW },
                                                                            { "none", FF_LOGO_TYPE_NONE },
+                                                                           { "animation", FF_LOGO_TYPE_ANIMATION },
                                                                            {},
                                                                        });
         } else if (ffStrStartsWithIgnCase(subKey, "color-") && subKey[6] != '\0' && subKey[7] == '\0') // matches "--logo-color-*"
@@ -115,6 +120,18 @@ bool ffOptionsParseLogoCommandLine(FFOptionsLogo* options, const char* key, cons
                                                                                    { "left", FF_LOGO_POSITION_LEFT },
                                                                                    { "right", FF_LOGO_POSITION_RIGHT },
                                                                                    { "top", FF_LOGO_POSITION_TOP },
+                                                                                   {},
+                                                                               });
+        } else if (ffStrEqualsIgnCase(subKey, "animation-fps")) {
+            options->animationFps = ffOptionParseUInt32(key, value);
+        } else if (ffStrEqualsIgnCase(subKey, "animation-loop")) {
+            options->animationLoop = (int32_t) ffOptionParseUInt32(key, value);
+        } else if (ffStrEqualsIgnCase(subKey, "animation-timeout")) {
+            options->animationTimeout = ffOptionParseUInt32(key, value);
+        } else if (ffStrEqualsIgnCase(subKey, "animation-hold")) {
+            options->animationHold = (int32_t) ffOptionParseEnum(key, value, (FFKeyValuePair[]) {
+                                                                                   { "first", 0 },
+                                                                                   { "last", 1 },
                                                                                    {},
                                                                                });
         } else {
@@ -262,6 +279,7 @@ const char* ffOptionsParseLogoJsonConfig(FFOptionsLogo* options, yyjson_val* roo
                                                                        { "chafa", FF_LOGO_TYPE_IMAGE_CHAFA },
                                                                        { "raw", FF_LOGO_TYPE_IMAGE_RAW },
                                                                        { "none", FF_LOGO_TYPE_NONE },
+                                                                       { "animation", FF_LOGO_TYPE_ANIMATION },
                                                                        {},
                                                                    });
 
@@ -351,6 +369,61 @@ const char* ffOptionsParseLogoJsonConfig(FFOptionsLogo* options, yyjson_val* roo
                 return error;
             }
             options->position = (FFLogoPosition) value;
+            continue;
+        } else if (unsafe_yyjson_equals_str(key, "animation")) {
+            if (!yyjson_is_obj(val)) {
+                return "Property 'animation' must be an object";
+            }
+
+            yyjson_val* fps = yyjson_obj_get(val, "fps");
+            if (fps) {
+                if (!yyjson_is_uint(fps)) {
+                    return "Property 'animation.fps' must be a positive integer";
+                }
+                uint32_t value = (uint32_t) yyjson_get_uint(fps);
+                if (value < 1 || value > 60) {
+                    return "Property 'animation.fps' must be between 1 and 60";
+                }
+                options->animationFps = value;
+            }
+
+            yyjson_val* loop = yyjson_obj_get(val, "loop");
+            if (loop) {
+                if (!yyjson_is_uint(loop)) {
+                    return "Property 'animation.loop' must be a positive integer (0 = infinite)";
+                }
+                uint32_t value = (uint32_t) yyjson_get_uint(loop);
+                if (value > 1000) {
+                    return "Property 'animation.loop' must be between 0 and 1000";
+                }
+                options->animationLoop = (int32_t) value;
+            }
+
+            yyjson_val* timeout = yyjson_obj_get(val, "timeout");
+            if (timeout) {
+                if (!yyjson_is_uint(timeout)) {
+                    return "Property 'animation.timeout' must be a positive integer (milliseconds)";
+                }
+                uint32_t value = (uint32_t) yyjson_get_uint(timeout);
+                if (value == 0 || value > 600000) {
+                    return "Property 'animation.timeout' must be between 1 and 600000 (milliseconds)";
+                }
+                options->animationTimeout = value;
+            }
+
+            yyjson_val* hold = yyjson_obj_get(val, "hold");
+            if (hold) {
+                int value;
+                const char* error = ffJsonConfigParseEnum(hold, &value, (FFKeyValuePair[]) {
+                                                                              { "first", 0 },
+                                                                              { "last", 1 },
+                                                                              {},
+                                                                          });
+                if (error) {
+                    return error;
+                }
+                options->animationHold = value;
+            }
             continue;
         } else if (unsafe_yyjson_equals_str(key, "chafa")) {
 #if FF_HAVE_CHAFA
@@ -481,6 +554,9 @@ void ffOptionsGenerateLogoJsonConfig(FFdata* data, FFOptionsLogo* options) {
         case FF_LOGO_TYPE_IMAGE_RAW:
             yyjson_mut_obj_add_str(doc, obj, "type", "raw");
             break;
+        case FF_LOGO_TYPE_ANIMATION:
+            yyjson_mut_obj_add_str(doc, obj, "type", "animation");
+            break;
         default:
             yyjson_mut_obj_add_str(doc, obj, "type", "auto");
             break;
@@ -528,6 +604,31 @@ void ffOptionsGenerateLogoJsonConfig(FFdata* data, FFOptionsLogo* options) {
                                                      "top",
                                                      "right",
                                                  })[options->position]);
+
+    {
+        yyjson_mut_val* animation = yyjson_mut_obj(doc);
+        if (options->animationFps == 0) {
+            yyjson_mut_obj_add_null(doc, animation, "fps");
+        } else {
+            yyjson_mut_obj_add_uint(doc, animation, "fps", options->animationFps);
+        }
+        if (options->animationLoop < 0) {
+            yyjson_mut_obj_add_null(doc, animation, "loop");
+        } else {
+            yyjson_mut_obj_add_uint(doc, animation, "loop", (uint64_t) options->animationLoop);
+        }
+        if (options->animationTimeout == 0) {
+            yyjson_mut_obj_add_null(doc, animation, "timeout");
+        } else {
+            yyjson_mut_obj_add_uint(doc, animation, "timeout", options->animationTimeout);
+        }
+        if (options->animationHold < 0) {
+            yyjson_mut_obj_add_null(doc, animation, "hold");
+        } else {
+            yyjson_mut_obj_add_str(doc, animation, "hold", options->animationHold == 0 ? "first" : "last");
+        }
+        yyjson_mut_obj_add_val(doc, obj, "animation", animation);
+    }
 
 #if FF_HAVE_CHAFA
     {

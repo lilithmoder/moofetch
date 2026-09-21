@@ -9,7 +9,7 @@ Example: python3 gen-man.py > moofetch.1
 
 The command options are generated using a JSON file.
 For the JSON file format, see:
-https://github.com/fastfetch-cli/moofetch/blob/dev/src/data/help.json
+https://github.com/fastfetch-cli/fastfetch/blob/dev/src/data/help.json
 """
 
 from json import load
@@ -97,14 +97,14 @@ The configuration/preset files are searched in the following locations (in order
 {startBold}3.{endBold} Relative to /usr/share/moofetch/presets/
 
 For detailed information on logo options, module configuration, and formatting, visit:
-{startBold}https://github.com/fastfetch-cli/moofetch/wiki/Configuration{endBold}
+{startBold}https://github.com/fastfetch-cli/fastfetch/wiki/Configuration{endBold}
 
 Moofetch provides several built-in presets. List them with {startBold}--list-presets{endBold}.
 
 .SS JSON Schema
 A JSON schema is available for editor intelligence when editing the configuration file. Add the following line at the beginning of your config file:
 
-{startBold}"$schema": "https://github.com/fastfetch-cli/moofetch/raw/dev/doc/json_schema.json"{endBold}
+{startBold}"$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json"{endBold}
 """
 
 # text displayed in the "EXAMPLE" section
@@ -128,7 +128,7 @@ exampleSection = f"""
 .nf
 // ~/.config/moofetch/config.jsonc
 {{
-    "$schema": "https://github.com/fastfetch-cli/moofetch/raw/dev/doc/json_schema.json",
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
     "logo": {{
         "type": "auto",
         "source": "arch"
@@ -159,10 +159,10 @@ exampleSection = f"""
 """
 
 # text displayed in the "BUGS" section
-bugSection = "Please report bugs to: https://github.com/fastfetch-cli/moofetch/issues"
+bugSection = "Please report bugs to: https://github.com/fastfetch-cli/fastfetch/issues"
 
 # text displayed in the "AUTHORS" section
-authorsSection = "Moofetch is developed by a team of contributors on GitHub.\nVisit https://github.com/fastfetch-cli/moofetch for more information."
+authorsSection = "Moofetch is developed by a team of contributors on GitHub.\nVisit https://github.com/fastfetch-cli/fastfetch for more information."
 
 
 ###### Argument decoration ######

@@ -354,17 +354,16 @@ static void addSeparatorBelow(FFGenConfigUI* ui, uint32_t idx) {
 }
 
 static void cycleLogoType(FFGenConfigUI* ui, int delta) {
-    switch (ui->logoType) {
-        case FF_LOGO_TYPE_AUTO:
-            ui->logoType = delta > 0 ? FF_LOGO_TYPE_SMALL : FF_LOGO_TYPE_NONE;
+    static const FFLogoType order[] = { FF_LOGO_TYPE_AUTO, FF_LOGO_TYPE_SMALL, FF_LOGO_TYPE_NONE, FF_LOGO_TYPE_ANIMATION };
+    uint32_t index = 0;
+    for (uint32_t i = 0; i < 4; ++i) {
+        if (order[i] == ui->logoType) {
+            index = i;
             break;
-        case FF_LOGO_TYPE_SMALL:
-            ui->logoType = delta > 0 ? FF_LOGO_TYPE_NONE : FF_LOGO_TYPE_AUTO;
-            break;
-        default:
-            ui->logoType = delta > 0 ? FF_LOGO_TYPE_AUTO : FF_LOGO_TYPE_SMALL;
-            break;
+        }
     }
+    index = (index + 4 + (delta > 0 ? 1 : 3)) % 4;
+    ui->logoType = order[index];
 }
 
 static uint32_t countSelectedModules(const FFlist* items) {
@@ -541,6 +540,8 @@ static void renderFrame(FFGenConfigUI* ui, FFstrbuf* out) {
     drawLogoOption(&row, "small", ui->logoType == FF_LOGO_TYPE_SMALL);
     rowAppendVisual(&row, "  ");
     drawLogoOption(&row, "none", ui->logoType == FF_LOGO_TYPE_NONE);
+    rowAppendVisual(&row, "  ");
+    drawLogoOption(&row, "animation", ui->logoType == FF_LOGO_TYPE_ANIMATION);
     if (cols >= 72) {
         rowAppendRaw(&row, FASTFETCH_TEXT_MODIFIER_SOFT);
         switch (ui->logoType) {
@@ -549,6 +550,9 @@ static void renderFrame(FFGenConfigUI* ui, FFstrbuf* out) {
                 break;
             case FF_LOGO_TYPE_SMALL:
                 rowAppendVisual(&row, " - Built-in ASCII art, small version");
+                break;
+            case FF_LOGO_TYPE_ANIMATION:
+                rowAppendVisual(&row, " - Animated ASCII logo");
                 break;
             default:
                 rowAppendVisual(&row, " - Disable logo printing");
@@ -935,6 +939,8 @@ static FFLogoType initialLogoType(void) {
             return FF_LOGO_TYPE_SMALL;
         case FF_LOGO_TYPE_NONE:
             return FF_LOGO_TYPE_NONE;
+        case FF_LOGO_TYPE_ANIMATION:
+            return FF_LOGO_TYPE_ANIMATION;
         default:
             return FF_LOGO_TYPE_AUTO;
     }

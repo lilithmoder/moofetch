@@ -425,6 +425,23 @@ foreach(file ${LOGO_FILES})
 endforeach()
 file(GENERATE OUTPUT logo_builtin.h CONTENT "${LOGO_BUILTIN_H}")
 
+############################
+# Animated logo frame data #
+############################
+
+file(GLOB ANIMATION_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/examples/*.anim")
+set(ANIMATIONS_BUILTIN_C "#include \"logo/animation.h\"\n\n")
+set(ANIMATIONS_BUILTIN_TABLE "const FFBuiltinAnimation ffBuiltinAnimations[] = {\n")
+foreach(file ${ANIMATION_FILES})
+    fastfetch_load_text("${file}" content)
+    get_filename_component(name "${file}" NAME_WE)
+    string(TOUPPER "${name}" macroName)
+    set(ANIMATIONS_BUILTIN_C "${ANIMATIONS_BUILTIN_C}#define FASTFETCH_DATATEXT_ANIMATION_${macroName} ${content}\n")
+    set(ANIMATIONS_BUILTIN_TABLE "${ANIMATIONS_BUILTIN_TABLE}    { \"${name}\", FASTFETCH_DATATEXT_ANIMATION_${macroName} },\n")
+endforeach()
+set(ANIMATIONS_BUILTIN_TABLE "${ANIMATIONS_BUILTIN_TABLE}    { nullptr, nullptr },\n};\n")
+file(WRITE "${PROJECT_BINARY_DIR}/animations_builtin.c" "${ANIMATIONS_BUILTIN_C}\n${ANIMATIONS_BUILTIN_TABLE}")
+
 #######################
 # libfastfetch target #
 #######################
@@ -492,10 +509,12 @@ set(LIBFASTFETCH_SRC
     src/detection/weather/weather.c
     src/detection/zpool/zpool.c
     src/logo/builtin.c
+    src/logo/animation.c
     src/logo/image/im6.c
     src/logo/image/im7.c
     src/logo/image/image.c
     src/logo/logo.c
+    "${PROJECT_BINARY_DIR}/animations_builtin.c"
     src/modules/battery/battery.c
     src/modules/bios/bios.c
     src/modules/bluetooth/bluetooth.c

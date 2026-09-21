@@ -1,4 +1,5 @@
 #include "logo/logo.h"
+#include "logo/animation.h"
 #include "common/io.h"
 #include "common/printing.h"
 #include "common/processing.h"
@@ -607,6 +608,11 @@ void ffLogoPrint(void) {
         return;
     }
 
+    if (options->type == FF_LOGO_TYPE_ANIMATION) {
+        ffAnimationPrint();
+        return;
+    }
+
     // If the source is not set, we can directly print the detected logo.
     if (options->source.length == 0) {
         ffLogoPrintDetected(options->type == FF_LOGO_TYPE_SMALL ? FF_LOGO_SIZE_SMALL : FF_LOGO_SIZE_NORMAL);
@@ -755,6 +761,16 @@ void ffLogoPrintRemaining(void) {
         ffPrintCharTimes('\n', instance.state.logoHeight - instance.state.keysHeight + 1);
     }
     instance.state.keysHeight = instance.state.logoHeight + 1;
+}
+
+void ffLogoPrintAnimationFrame(const char* data) {
+    logoApplyColors(logoGetBuiltinDetected(FF_LOGO_SIZE_NORMAL), true);
+    ffLogoPrintChars(data, true);
+}
+
+void ffLogoPrintAnimationRow(uint32_t row) {
+    instance.state.logoLineCache.nextLine = row;
+    ffLogoPrintLine();
 }
 
 void ffLogoBuiltinPrint(void) {
