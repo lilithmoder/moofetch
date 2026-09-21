@@ -9,6 +9,30 @@ logos**.
   frame, and exit like a normal fetch tool.</em>
 </p>
 
+## Install
+
+**Prebuilt binary** — grab the latest tarball from
+[Releases](https://github.com/lilithmoder/moofetch/releases):
+
+```sh
+tar xzf moofetch-*-linux-amd64.tar.gz
+sudo install -Dm755 moofetch-*/moofetch /usr/local/bin/moofetch
+sudo install -Dm755 moofetch-*/mooflash /usr/local/bin/mooflash
+```
+
+**From source** — see [Building](#building), or use the helper script:
+
+```sh
+git clone https://github.com/lilithmoder/moofetch.git
+cd moofetch
+./scripts/install-local.sh                     # builds, then installs to /usr/local
+./scripts/install-local.sh --no-install        # build only -> ./build/moofetch
+./scripts/install-local.sh --with-converters   # also install ImageMagick + chafa (gif2anim)
+```
+
+**Browser converter** — hosted at
+**<https://lilithmoder.github.io/moofetch/>** (source: [`web/index.html`](web/index.html)).
+
 ## Features
 
 * **Animated ASCII logos** — multi-frame, colored animations rendered in place next to
@@ -31,6 +55,24 @@ logos**.
   required.
 * **Script-safe** — when piped or redirected, the hold frame is printed statically with
   no cursor movement escapes.
+
+## Differences from fastfetch
+
+moofetch is a superset of fastfetch: every fastfetch option, module and config key works
+unchanged. On top of that:
+
+* New logo type `animation` with the `.anim` frame format, plus
+  `--logo-animation-{fps,loop,timeout,hold}` and `--list-animations`.
+* Animated logos work at all logo positions (`left`, `top`, `right`).
+* A bare `moofetch` run animates the logo when a built-in animation matches the detected
+  distro (use `--logo-type builtin` or `"logo": { "type": "builtin" }` for the classic
+  static logo). Piped/redirected output is unaffected — it prints the hold frame, whose
+  characters are identical to the static logo.
+* 35 bundled animations, including the slow 3D spins `arch_rotate` and `cachyos_rotate`.
+* Config and data lookup checks `moofetch/` directories first, then falls back to
+  fastfetch's (`~/.config/fastfetch/`, `/usr/share/fastfetch/`, …).
+* Two converters for creating animations: `tools/gif2anim` (CLI) and the
+  [browser converter](https://lilithmoder.github.io/moofetch/).
 
 ## Building
 
@@ -78,6 +120,14 @@ All general fastfetch options and modules apply unchanged — see the
 [fastfetch wiki](https://github.com/fastfetch-cli/fastfetch/wiki/Configuration) for the
 full option reference.
 
+### Shell integration
+
+To use moofetch on shell startup, replace any existing `fastfetch` call in your shell
+config with `moofetch` (e.g. in `~/.bashrc`, `~/.zshrc` or
+`~/.config/fish/config.fish`). The bundled animations take a moment to play (default:
+2 loops ≈ 1.3 s, `*_rotate` ≈ 4.5 s) — for faster startup use `--logo-animation-loop 1`
+or keep the static logo with `--logo-type builtin`.
+
 ### Playback behaviour
 
 On distros with a built-in animation, moofetch animates the logo by default — set
@@ -96,13 +146,16 @@ bare `moofetch` run may animate as described above.
 
 The `.anim` format, the bundled examples and the `tools/gif2anim` converter are
 documented in [`examples/README.md`](examples/README.md). There is also a self-contained
-browser converter at [`web/index.html`](web/index.html) — open it locally (or host the
-`web/` directory with GitHub Pages) and drag a GIF onto it.
+browser converter, hosted at <https://lilithmoder.github.io/moofetch/> (source:
+[`web/index.html`](web/index.html)) — you can also just open the file locally and drag a
+GIF onto it.
 
 ## Project status
 
-This is a hard fork pinned to fastfetch `2.68.1`; see [`UPSTREAM.md`](UPSTREAM.md) for
-provenance. Known limitations:
+The fork is published at **<https://github.com/lilithmoder/moofetch>** (release
+[v0.1.0](https://github.com/lilithmoder/moofetch/releases/tag/v0.1.0), CI and Pages
+included). It is a hard fork pinned to fastfetch `2.68.1`; see
+[`UPSTREAM.md`](UPSTREAM.md) for provenance. Known limitations:
 
 * Animated logos are POSIX-terminal only (Windows prints the hold frame statically).
 * Animation cannot persist after moofetch exits — the shell owns the terminal afterwards.
@@ -110,7 +163,8 @@ provenance. Known limitations:
   [`PLAN.md`](PLAN.md) §17.)
 
 Packaging files (AUR, Nix flake, Homebrew template) live in [`packaging/`](packaging/);
-they need the real repository URL before use.
+the AUR `Maintainer:` email and the Homebrew `sha256` still need real values before
+publishing (see `packaging/README.md`).
 
 ## Credits and license
 

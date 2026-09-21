@@ -188,7 +188,7 @@
         {
             "long": "logo-type",
             "desc": "Set the type of logo specified by \"--logo\"",
-            "remark": "See also https://github.com/fastfetch-cli/fastfetch/wiki/Logo-options",
+            "remark": "See also https://github.com/fastfetch-cli/fastfetch/wiki/Logo-options. The `.anim` format is documented at https://github.com/lilithmoder/moofetch/blob/main/examples/README.md",
             "arg": {
                 "type": "enum",
                 "enum": {

@@ -17,6 +17,14 @@ The file name is the built-in name; list them all with `moofetch --list-animatio
 Distro names are matched against the detected OS id case-insensitively, with `-` and `_`
 treated as equal (so `opensuse-tumbleweed` finds `opensuse_tumbleweed.anim`).
 
+### Adding an animation to the bundle
+
+Drop a `<name>.anim` file into this directory: the build embeds every `*.anim` here as a
+built-in named after the file, so no C changes are needed. If the animation should be
+auto-detected for a distro, name it after the distro's `/etc/os-release` `ID`. The
+generator (`tools/gen-animations.py`) produces the bundled files from fastfetch's built-in
+ASCII art, and CI fails if the generated files are out of date.
+
 ## Usage
 
 ```sh

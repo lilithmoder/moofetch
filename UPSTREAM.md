@@ -39,6 +39,18 @@ upstream project (and would be misleading or broken in this fork):
 
 ## Fork home
 
-The fork lives at <https://github.com/lilithmoder/moofetch>; `$schema` output and package metadata point there.
+The fork lives at <https://github.com/lilithmoder/moofetch>; `$schema` output and package
+metadata point there.
+
+Published artifacts:
+
+| | |
+|---|---|
+| Repository | https://github.com/lilithmoder/moofetch |
+| First release | https://github.com/lilithmoder/moofetch/releases/tag/v0.1.0 |
+| Browser converter (GitHub Pages) | https://lilithmoder.github.io/moofetch/ |
+| Provenance tag | `upstream-2.68.1` (the upstream base commit) |
+
+The full upstream history is included in this repository (not just the base commit).
 The AUR `Maintainer:` line and the Homebrew `sha256` still need real values before
 publishing (see `packaging/README.md`).

@@ -2,6 +2,33 @@
 > from which moofetch was forked. See `UPSTREAM.md` for provenance and the git history for
 > moofetch's own changes.
 
+# moofetch 0.1.0 (2026-09-21)
+
+First release of the animated-ASCII fork, based on fastfetch 2.68.1.
+
+Features:
+* Animated ASCII logos: new `animation` logo type and the `.anim` frame format
+  (`!fps`/`!loop`/`!timeout`/`!hold` directives, `---` frame separators, `$1`–`$9` theme
+  colors, raw ANSI/truecolor), with `--logo-animation-{fps,loop,timeout,hold}` options.
+* 35 bundled animations compiled into the binary — distro auto-detection (moving
+  highlight bands) plus the slow 3D spins `arch_rotate` and `cachyos_rotate`.
+* Animated logos at the `left`, `top` and `right` logo positions.
+* Bare runs animate when a built-in animation matches the detected distro; piped output
+  stays byte-identical to fastfetch (the hold frame has the same characters as the static
+  logo).
+* `--list-animations`; shell completions include animation names.
+* Converters: `tools/gif2anim` (ImageMagick + chafa) and a browser converter
+  (`web/index.html`, hosted on GitHub Pages).
+* Config/data lookup checks `moofetch/` directories first, then falls back to fastfetch
+  paths, so existing setups keep working.
+* Packaging scaffolding: AUR PKGBUILD, Nix flake, Homebrew formula template.
+* Tests: PTY animation smoke tests, upstream compatibility suite (deterministic output and
+  all builtin logos byte-identical to fastfetch 2.68.1), web converter tests; CI and
+  release workflows included.
+
+Bug fixes (relative to fastfetch 2.68.1):
+* Build with DRM headers that lack the nouveau getparam API (e.g. Ubuntu 22.04).
+
 # 2.68.1
 
 Changes:

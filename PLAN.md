@@ -102,6 +102,9 @@ append, don't insert.
 
 ## 3. Naming
 
+> **Resolved:** the project was named **moofetch** by the owner; `mooflash` is the renamed
+> companion binary. All occurrences of the placeholder `animfetch` below refer to moofetch.
+
 **`animfetch` is a placeholder working title.** The owner has not picked a final name
 (candidates floated: animfetch, motionfetch, moofetch, fluxfetch). Confirm with the
 owner before the rebrand phase (Phase 0.3); until then, use `animfetch` consistently —
@@ -132,11 +135,11 @@ mechanical pass.
 7. **POSIX terminals only for animation in v1**: on Windows, non-TTY stdout, or any
    unsupported condition, fall back to printing the final frame statically.
 
-### 4.2 Open decisions (confirm with owner when reached)
+### 4.2 Open decisions (resolved)
 
-- Final project name (§3).
-- Whether to keep building the `flashfetch` companion binary (recommend: keep, renamed
-  if trivial; zero functional changes).
+- ~~Final project name (§3).~~ Resolved: **moofetch** (binary) / **mooflash** (companion).
+- ~~Whether to keep building the `flashfetch` companion binary.~~ Resolved: kept, renamed
+  to `mooflash`, zero functional changes.
 
 ---
 
@@ -737,5 +740,17 @@ Stretch goals follow-up (see §17):
 - Added the browser converter (`web/index.html`, Node-tested) and packaging scaffolding
   (`packaging/`, `flake.nix`).
 - Not done: kitty/iTerm2 persistent animation and Windows animation (see §17).
+
+Publication (2026-09-21):
+
+- Repository: <https://github.com/lilithmoder/moofetch> — full upstream history is included
+  (the initial shallow clone had to be unshallowed; GitHub rejects pushes from shallow
+  clones) and the base commit is tagged `upstream-2.68.1`.
+- Release `v0.1.0` with a Linux amd64 tarball and checksum, produced by
+  `.github/workflows/release.yml`.
+- GitHub Pages hosts the browser converter at <https://lilithmoder.github.io/moofetch/>.
+- Release-workflow fixes worth remembering: `gcc-13` from the ubuntu-toolchain-r PPA is
+  needed on Ubuntu 22.04 (C23) while keeping the older glibc; and the nouveau getparam
+  queries in `gpu_drm.c` are now compiled only when the DRM headers provide them.
 
 End of document.
